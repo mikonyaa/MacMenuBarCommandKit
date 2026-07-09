@@ -7,7 +7,7 @@ on:
 
 jobs:
   package:
-    runs-on: macos-26
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
       - name: Select Xcode
@@ -16,7 +16,7 @@ jobs:
         run: swift test
 
   demo:
-    runs-on: macos-26
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
       - name: Select Xcode
