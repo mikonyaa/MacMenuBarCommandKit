@@ -11,7 +11,7 @@ Part of the [Apple Design Templates](https://github.com/mikonyaa/Apple-Design-Te
 
 ![MacMenuBarCommandKit preview](Assets/GIFs/mac-menu-bar-command-kit.gif)
 
-MacMenuBarCommandKit is a reusable starter kit for building native menu bar utilities: AI assistants, timers, clipboard tools, quick notes, system monitors, and productivity apps. It combines a `MenuBarExtra`, a real main window, command palette, keyboard shortcuts, native Settings, Launch at Login support, deterministic local data, and a clean Swift Package API.
+MacMenuBarCommandKit is a reusable starter kit for building native menu bar utilities: desktop assistants, timers, clipboard tools, quick notes, system monitors, and productivity apps. It combines a `MenuBarExtra`, a real main window, command palette, keyboard shortcuts, native Settings, Launch at Login support, deterministic local data, and a clean Swift Package API.
 
 ## Included
 
@@ -52,7 +52,7 @@ open Examples/CommandKitDemo/CommandKitDemo.xcodeproj
 
 Select the `CommandKitDemo` scheme and run on My Mac.
 
-Or use the Codex/local run script:
+Or use the local run script:
 
 ```bash
 ./script/build_and_run.sh
@@ -115,7 +115,6 @@ MacMenuBarCommandKit/
 - [Customization](Docs/Customization.md)
 - [Accessibility](Docs/Accessibility.md)
 - [Release checklist](Docs/ReleaseChecklist.md)
-- [Beginner AI learning prompt](Docs/LearningPrompt.md)
 
 ## Verification
 

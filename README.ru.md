@@ -10,7 +10,7 @@ Production-ready SwiftUI шаблон для macOS menu bar утилит с comm
 
 ![MacMenuBarCommandKit preview](Assets/GIFs/mac-menu-bar-command-kit.gif)
 
-Шаблон подходит для AI assistants, timers, clipboard tools, notes apps, system monitors и productivity utilities. Внутри есть `MenuBarExtra`, обычное Dock-visible окно, command palette, shortcuts, native Settings, Launch at Login через `SMAppService`, локальные demo data и понятная Swift Package архитектура.
+Шаблон подходит для desktop assistants, timers, clipboard tools, notes apps, system monitors и productivity utilities. Внутри есть `MenuBarExtra`, обычное Dock-visible окно, command palette, shortcuts, native Settings, Launch at Login через `SMAppService`, локальные demo data и понятная Swift Package архитектура.
 
 ## Что внутри
 
@@ -58,7 +58,6 @@ registry.register(.summarizeClipboard) { command in
 - [Customization](Docs/Customization.md)
 - [Accessibility](Docs/Accessibility.md)
 - [Release checklist](Docs/ReleaseChecklist.md)
-- [Learning prompt](Docs/LearningPrompt.md)
 
 ## Проверка
 
