@@ -7,8 +7,17 @@ final class CommandKitTests: XCTestCase {
         let registry = CommandRegistry(commands: CommandItem.demoCommands)
 
         XCTAssertEqual(registry.filteredCommands(matching: "timer").map(\.action), [.startTimer])
-        XCTAssertEqual(registry.filteredCommands(matching: "ai clipboard").map(\.action), [.summarizeClipboard])
+        XCTAssertEqual(registry.filteredCommands(matching: "clipboard inbox").map(\.action), [.captureClipboard])
+        XCTAssertEqual(registry.filteredCommands(matching: "status report").map(\.action), [.copyStatusReport])
         XCTAssertEqual(registry.filteredCommands(matching: "cmd unknown").count, 0)
+    }
+
+    func testDemoCommandsCoverCoreMenuBarWorkflows() {
+        XCTAssertEqual(CommandItem.demoCommands.count, 8)
+        XCTAssertEqual(
+            Set(CommandItem.demoCommands.map(\.action)),
+            Set(CommandAction.allCases)
+        )
     }
 
     func testCommandStorePerformsAndTracksRecentCommands() {
@@ -16,12 +25,34 @@ final class CommandKitTests: XCTestCase {
         let store = CommandStore(registry: registry)
 
         store.perform(.newNote)
-        store.perform(.toggleFocusMode)
+        store.perform(.startTimer)
 
-        XCTAssertEqual(store.recentCommands.first?.action, .toggleFocusMode)
-        XCTAssertEqual(store.recentCommands.map(\.action), [.toggleFocusMode, .newNote])
+        XCTAssertEqual(store.recentCommands.first?.action, .startTimer)
+        XCTAssertEqual(store.recentCommands.map(\.action), [.startTimer, .newNote])
         XCTAssertTrue(store.isFocusModeEnabled)
-        XCTAssertEqual(store.lastActionSummary, "Focus mode enabled.")
+        XCTAssertEqual(store.lastActionSummary, "Started a 25-minute focus timer.")
+    }
+
+    func testDashboardStoreRecordsCommandAsVisibleActivity() {
+        let store = DashboardStore()
+        let command = CommandItem.demoCommands.first { $0.action == .newNote }!
+
+        store.record(command: command, summary: "Created a local note.")
+
+        XCTAssertEqual(store.state, .loaded)
+        XCTAssertEqual(store.activities.first?.title, "New Note")
+        XCTAssertEqual(store.activities.first?.subtitle, "Created a local note.")
+        XCTAssertEqual(store.metrics.first?.value, "43")
+    }
+
+    func testDashboardStoreRecordsClearInboxSideEffect() {
+        let store = DashboardStore()
+        let command = CommandItem.demoCommands.first { $0.action == .clearInbox }!
+
+        store.record(command: command, summary: "Cleared the local inbox.")
+
+        XCTAssertEqual(store.metrics.first { $0.id == "queue" }?.value, "0")
+        XCTAssertEqual(store.activities.first?.title, "Clear Inbox")
     }
 
     func testSettingsStoreLoadsDefaultsAndPersistsUpdates() {

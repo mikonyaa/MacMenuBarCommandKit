@@ -16,6 +16,7 @@ public struct StatusBadge: View {
             .font(.caption.weight(.semibold))
             .foregroundStyle(color)
             .labelStyle(.titleAndIcon)
+            .lineLimit(1)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(color.opacity(0.12), in: Capsule())

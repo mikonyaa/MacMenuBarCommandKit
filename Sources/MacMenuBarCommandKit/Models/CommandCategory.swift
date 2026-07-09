@@ -2,7 +2,7 @@ import Foundation
 
 public enum CommandCategory: String, CaseIterable, Codable, Identifiable, Sendable {
     case productivity
-    case ai
+    case clipboard
     case focus
     case navigation
     case system
@@ -13,8 +13,8 @@ public enum CommandCategory: String, CaseIterable, Codable, Identifiable, Sendab
         switch self {
         case .productivity:
             "Productivity"
-        case .ai:
-            "AI"
+        case .clipboard:
+            "Clipboard"
         case .focus:
             "Focus"
         case .navigation:

@@ -46,7 +46,7 @@ public extension CommandItem {
         CommandItem(
             id: "new-note",
             title: "New Note",
-            subtitle: "Capture a short AI-ready note.",
+            subtitle: "Capture a short local note.",
             systemImage: "square.and.pencil",
             category: .productivity,
             shortcut: CommandShortcut(key: "N"),
@@ -62,13 +62,31 @@ public extension CommandItem {
             action: .startTimer
         ),
         CommandItem(
-            id: "summarize-clipboard",
-            title: "Summarize Clipboard",
-            subtitle: "Turn copied text into a concise brief.",
+            id: "capture-clipboard",
+            title: "Capture Clipboard",
+            subtitle: "Save copied text to the local inbox.",
             systemImage: "doc.on.clipboard",
-            category: .ai,
-            shortcut: CommandShortcut(modifiers: [.command, .shift], key: "S"),
-            action: .summarizeClipboard
+            category: .clipboard,
+            shortcut: CommandShortcut(modifiers: [.command, .shift], key: "V"),
+            action: .captureClipboard
+        ),
+        CommandItem(
+            id: "copy-status-report",
+            title: "Copy Status Report",
+            subtitle: "Put a local progress report on the clipboard.",
+            systemImage: "doc.text.magnifyingglass",
+            category: .system,
+            shortcut: CommandShortcut(modifiers: [.command, .shift], key: "C"),
+            action: .copyStatusReport
+        ),
+        CommandItem(
+            id: "clear-inbox",
+            title: "Clear Inbox",
+            subtitle: "Archive waiting local items in one action.",
+            systemImage: "tray.and.arrow.down",
+            category: .productivity,
+            shortcut: CommandShortcut(modifiers: [.command, .shift], key: "X"),
+            action: .clearInbox
         ),
         CommandItem(
             id: "open-dashboard",

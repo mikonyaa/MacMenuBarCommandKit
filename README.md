@@ -11,7 +11,7 @@ Part of the [Apple Design Templates](https://github.com/mikonyaa/Apple-Design-Te
 
 ![MacMenuBarCommandKit preview](Assets/GIFs/mac-menu-bar-command-kit.gif)
 
-MacMenuBarCommandKit is a reusable starter kit for building native menu bar utilities: desktop assistants, timers, clipboard tools, quick notes, system monitors, and productivity apps. It combines a `MenuBarExtra`, a real main window, command palette, keyboard shortcuts, native Settings, Launch at Login support, deterministic local data, and a clean Swift Package API.
+MacMenuBarCommandKit is a reusable starter kit for building native menu bar utilities: desktop tools, timers, clipboard workflows, quick notes, system monitors, and productivity apps. It combines a `MenuBarExtra`, a real main window, command palette, keyboard shortcuts, native Settings, Launch at Login support, deterministic local data, and a clean Swift Package API.
 
 ## Included
 
@@ -25,6 +25,21 @@ MacMenuBarCommandKit is a reusable starter kit for building native menu bar util
 - Loading, empty, error, and loaded dashboard states.
 - Unit tests, GitHub Actions, issue templates, changelog, and release checklist.
 - English and Russian documentation.
+
+## Demo commands
+
+The demo ships with eight commands. They are intentionally practical and small enough for a menu bar app:
+
+| Command | What it demonstrates | Visible result |
+| --- | --- | --- |
+| New Note | Fast local capture | Adds an inbox item and activity entry |
+| Start Timer | Focus/timer workflow | Starts focus state and increases protected time |
+| Capture Clipboard | Pasteboard-driven workflow | Saves copied text into local demo state |
+| Copy Status Report | System clipboard output | Copies a text report to the macOS pasteboard |
+| Clear Inbox | Batch cleanup action | Resets the inbox metric |
+| Toggle Focus Mode | Stateful toggle | Updates focus state and status badges |
+| Open Dashboard | Window navigation | Opens the main workspace |
+| Open Settings | Native preferences | Opens the SwiftUI Settings scene |
 
 ## Preview
 
@@ -75,15 +90,15 @@ Commands are metadata first. Add a `CommandItem` and register behavior where you
 let command = CommandItem(
     id: "export-summary",
     title: "Export Summary",
-    subtitle: "Save the latest AI summary as Markdown.",
+    subtitle: "Save today's local status as Markdown.",
     systemImage: "square.and.arrow.down",
     category: .productivity,
     shortcut: CommandShortcut(modifiers: [.command, .shift], key: "E"),
-    action: .summarizeClipboard
+    action: .copyStatusReport
 )
 
 registry.replaceCommands(CommandItem.demoCommands + [command])
-registry.register(.summarizeClipboard) { command in
+registry.register(.copyStatusReport) { command in
     print("Run \(command.title)")
 }
 ```

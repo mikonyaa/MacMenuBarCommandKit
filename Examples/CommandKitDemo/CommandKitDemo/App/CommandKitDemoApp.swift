@@ -33,9 +33,6 @@ struct CommandKitDemoApp: App {
                 onCommand: handleCommand
             )
             .preferredColorScheme(settingsStore.settings.themePreference.colorScheme)
-            .sheet(isPresented: $commandStore.isPalettePresented) {
-                CommandPalette(commandStore: commandStore, onCommand: handleCommand)
-            }
             .onAppear {
                 configureForLaunchArguments()
             }
@@ -61,6 +58,28 @@ struct CommandKitDemoApp: App {
                     commandStore.presentPalette()
                 }
                 .keyboardShortcut("k", modifiers: .command)
+
+                Button("Start Timer") {
+                    perform(.startTimer)
+                }
+                .keyboardShortcut("T", modifiers: [.command, .shift])
+
+                Button("Capture Clipboard") {
+                    perform(.captureClipboard)
+                }
+                .keyboardShortcut("V", modifiers: [.command, .shift])
+
+                Button("Copy Status Report") {
+                    perform(.copyStatusReport)
+                }
+                .keyboardShortcut("C", modifiers: [.command, .shift])
+
+                Button("Clear Inbox") {
+                    perform(.clearInbox)
+                }
+                .keyboardShortcut("X", modifiers: [.command, .shift])
+
+                Divider()
 
                 Button("Open Dashboard") {
                     openMainWindow()
@@ -106,11 +125,15 @@ struct CommandKitDemoApp: App {
             openMainWindow()
         case .openSettings:
             openSettings()
-        case .summarizeClipboard:
-            summarizeClipboardIfAvailable()
-        case .newNote, .startTimer, .toggleFocusMode:
+        case .captureClipboard:
+            updateClipboardCaptureIfAvailable()
+        case .copyStatusReport:
+            copyStatusReport()
+        case .newNote, .startTimer, .clearInbox, .toggleFocusMode:
             break
         }
+
+        dashboardStore.record(command: command, summary: commandStore.lastActionSummary)
     }
 
     @MainActor
@@ -133,11 +156,28 @@ struct CommandKitDemoApp: App {
     }
 
     @MainActor
-    private func summarizeClipboardIfAvailable() {
+    private func updateClipboardCaptureIfAvailable() {
         let text = NSPasteboard.general.string(forType: .string)
-        guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        let trimmedText = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !trimmedText.isEmpty else {
+            commandStore.updateLastActionSummary("Clipboard is empty. Copy text and run again.")
             return
         }
+
+        commandStore.updateLastActionSummary("Captured \(trimmedText.count) clipboard characters.")
+    }
+
+    @MainActor
+    private func copyStatusReport() {
+        let report = """
+        CommandKit Status
+        Commands: \(commandStore.registry.commands.count)
+        Recent: \(commandStore.recentCommands.count)
+        Focus: \(commandStore.isFocusModeEnabled ? "active" : "ready")
+        """
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(report, forType: .string)
+        commandStore.updateLastActionSummary("Copied status report to clipboard.")
     }
 
     @MainActor

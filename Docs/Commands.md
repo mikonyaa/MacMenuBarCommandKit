@@ -38,8 +38,16 @@ The demo exposes:
 
 - `⌘K`: open command palette
 - `⌘N`: New Note
+- `⌘⇧T`: Start Timer
+- `⌘⇧V`: Capture Clipboard
+- `⌘⇧C`: Copy Status Report
+- `⌘⇧X`: Clear Inbox
 - `⌘,`: Settings
 - `⌘D`: Open Dashboard
 - `⌘⌥F`: Toggle Focus Mode
 
 Avoid registering the same shortcut in multiple command menus.
+
+## Demo command scope
+
+The template ships with eight commands because a menu bar utility should stay quick to scan. The first commands are daily actions, while navigation and settings remain searchable from the palette and visible in the main window.

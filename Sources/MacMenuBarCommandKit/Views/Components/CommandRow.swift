@@ -3,6 +3,7 @@ import SwiftUI
 public struct CommandRow: View {
     private let command: CommandItem
     private let isHighlighted: Bool
+    @State private var isHovering = false
 
     public init(command: CommandItem, isHighlighted: Bool = false) {
         self.command = command
@@ -40,13 +41,15 @@ public struct CommandRow: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background {
-            if isHighlighted {
+            if isHighlighted || isHovering {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(.tint.opacity(0.12))
+                    .fill(.tint.opacity(isHighlighted ? 0.14 : 0.08))
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .onHover { isHovering = $0 }
         .accessibilityElement(children: .combine)
     }
 }

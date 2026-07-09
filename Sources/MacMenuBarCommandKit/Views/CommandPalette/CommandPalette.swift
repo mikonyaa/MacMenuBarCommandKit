@@ -3,6 +3,7 @@ import SwiftUI
 public struct CommandPalette: View {
     @ObservedObject private var commandStore: CommandStore
     private let onCommand: (CommandItem) -> Void
+    @FocusState private var searchFocused: Bool
 
     public init(
         commandStore: CommandStore,
@@ -19,7 +20,15 @@ public struct CommandPalette: View {
             commandList
         }
         .frame(width: 560, height: 520)
-        .background(.regularMaterial)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(.separator.opacity(0.55), lineWidth: 1)
+        }
+        .accessibilityAddTraits(.isModal)
+        .onAppear {
+            searchFocused = true
+        }
     }
 
     private var header: some View {
@@ -30,6 +39,10 @@ public struct CommandPalette: View {
             TextField("Search commands", text: $commandStore.query)
                 .textFieldStyle(.plain)
                 .font(.title3)
+                .focused($searchFocused)
+                .onSubmit {
+                    submitTopResult()
+                }
             Button {
                 commandStore.dismissPalette()
             } label: {
@@ -52,7 +65,7 @@ public struct CommandPalette: View {
                 systemImage: "command"
             )
         } else {
-            ScrollView {
+            GrabScrollView {
                 LazyVStack(spacing: 4) {
                     ForEach(commands) { command in
                         Button {
@@ -60,6 +73,7 @@ public struct CommandPalette: View {
                             commandStore.dismissPalette()
                         } label: {
                             CommandRow(command: command)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .buttonStyle(.plain)
                     }
@@ -67,5 +81,14 @@ public struct CommandPalette: View {
                 .padding(10)
             }
         }
+    }
+
+    private func submitTopResult() {
+        guard let command = commandStore.filteredCommands.first else {
+            return
+        }
+
+        onCommand(command)
+        commandStore.dismissPalette()
     }
 }

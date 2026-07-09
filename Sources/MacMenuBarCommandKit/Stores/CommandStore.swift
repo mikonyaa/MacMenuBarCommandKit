@@ -27,6 +27,10 @@ public final class CommandStore: ObservableObject {
         registry.filteredCommands(matching: query)
     }
 
+    public var hasActionSummary: Bool {
+        lastActionSummary != "Ready"
+    }
+
     public func presentPalette() {
         query = ""
         isPalettePresented = true
@@ -34,6 +38,10 @@ public final class CommandStore: ObservableObject {
 
     public func dismissPalette() {
         isPalettePresented = false
+    }
+
+    public func updateLastActionSummary(_ summary: String) {
+        lastActionSummary = summary
     }
 
     public func perform(_ command: CommandItem) {
@@ -65,11 +73,16 @@ public final class CommandStore: ObservableObject {
     private func applyDefaultSideEffect(for command: CommandItem) {
         switch command.action {
         case .newNote:
-            lastActionSummary = "Created a local demo note."
+            lastActionSummary = "Created a local note."
         case .startTimer:
+            isFocusModeEnabled = true
             lastActionSummary = "Started a 25-minute focus timer."
-        case .summarizeClipboard:
-            lastActionSummary = "Prepared clipboard text for summary."
+        case .captureClipboard:
+            lastActionSummary = "Captured clipboard text."
+        case .copyStatusReport:
+            lastActionSummary = "Copied today's status report."
+        case .clearInbox:
+            lastActionSummary = "Cleared the local inbox."
         case .openDashboard:
             lastActionSummary = "Opened the main dashboard."
         case .toggleFocusMode:

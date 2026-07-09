@@ -31,16 +31,23 @@ public struct MenuBarDashboard: View {
         VStack(spacing: 14) {
             header
             searchField
-            content
+            GrabScrollView(showsIndicators: true) {
+                content
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(height: settingsStore.settings.menuBarPresentation == .compact ? 340 : 430)
             footer
         }
         .padding(16)
-        .frame(width: settingsStore.settings.menuBarPresentation == .compact ? 340 : 390)
+        .frame(
+            width: settingsStore.settings.menuBarPresentation == .compact ? 340 : 390,
+            height: settingsStore.settings.menuBarPresentation == .compact ? 520 : 620
+        )
     }
 
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
-            Image(systemName: "sparkles")
+            Image(systemName: "command.circle")
                 .font(.title3.weight(.bold))
                 .foregroundStyle(.white)
                 .frame(width: 36, height: 36)
@@ -48,7 +55,7 @@ public struct MenuBarDashboard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("CommandKit")
                     .font(.headline)
-                Text(commandStore.lastActionSummary)
+                Text(commandStore.hasActionSummary ? commandStore.lastActionSummary : "Local command router")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -118,15 +125,56 @@ public struct MenuBarDashboard: View {
             if let firstMetric = dashboardStore.metrics.first {
                 MetricCardView(metric: firstMetric)
             }
+
+            if !dashboardStore.activities.isEmpty {
+                SectionHeader(
+                    "Activity",
+                    subtitle: commandStore.hasActionSummary ? commandStore.lastActionSummary : "Latest local events"
+                )
+                VStack(spacing: 2) {
+                    ForEach(Array(dashboardStore.activities.prefix(3))) { activity in
+                        HStack(spacing: 10) {
+                            Image(systemName: activity.systemImage)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(activity.tone.color)
+                                .frame(width: 24, height: 24)
+                                .background(activity.tone.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(activity.title)
+                                    .font(.caption.weight(.semibold))
+                                    .lineLimit(1)
+                                Text(activity.subtitle)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 7)
+                    }
+                }
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(.separator.opacity(0.35), lineWidth: 1)
+                }
+            }
         }
     }
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Button("Open Window", action: openMainWindow)
-            Button("Settings", action: openSettings)
+            Button(action: openMainWindow) {
+                Label("Open Window", systemImage: "macwindow")
+            }
+            Button(action: openSettings) {
+                Label("Settings", systemImage: "gearshape")
+            }
             Spacer()
-            Button("Quit", role: .destructive, action: quit)
+            Button(role: .destructive, action: quit) {
+                Label("Quit", systemImage: "power")
+            }
         }
         .controlSize(.small)
     }

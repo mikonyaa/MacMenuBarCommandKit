@@ -8,16 +8,18 @@ struct DemoRootView: View {
     let onCommand: (CommandItem) -> Void
 
     var body: some View {
-        MainDashboardView(
-            commandStore: commandStore,
-            dashboardStore: dashboardStore,
-            onCommand: onCommand
-        )
-        .onChange(of: settingsStore.settings.demoDataEnabled) { _, isEnabled in
-            if isEnabled {
-                dashboardStore.loadDemoContent()
-            } else {
-                dashboardStore.showEmpty()
+        CommandPaletteOverlay(commandStore: commandStore, onCommand: onCommand) {
+            MainDashboardView(
+                commandStore: commandStore,
+                dashboardStore: dashboardStore,
+                onCommand: onCommand
+            )
+            .onChange(of: settingsStore.settings.demoDataEnabled) { _, isEnabled in
+                if isEnabled {
+                    dashboardStore.loadDemoContent()
+                } else {
+                    dashboardStore.showEmpty()
+                }
             }
         }
     }
