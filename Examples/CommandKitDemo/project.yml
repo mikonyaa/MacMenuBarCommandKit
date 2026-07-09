@@ -1,0 +1,55 @@
+name: CommandKitDemo
+
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+configs:
+  Debug: debug
+  Release: release
+
+packages:
+  MacMenuBarCommandKit:
+    path: ../..
+
+settings:
+  base:
+    CLANG_ENABLE_MODULES: YES
+    DEVELOPMENT_TEAM: ""
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    SDKROOT: macosx
+    SWIFT_VERSION: "6.0"
+
+targets:
+  CommandKitDemo:
+    type: application
+    platform: macOS
+    sources:
+      - path: CommandKitDemo
+    dependencies:
+      - package: MacMenuBarCommandKit
+        product: MacMenuBarCommandKit
+    info:
+      path: CommandKitDemo/Info.plist
+      properties:
+        CFBundleDisplayName: CommandKit
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSMinimumSystemVersion: "14.0"
+        LSApplicationCategoryType: public.app-category.productivity
+        NSHumanReadableCopyright: "MIT License"
+    settings:
+      base:
+        CODE_SIGN_STYLE: Automatic
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: CommandKitDemo/Info.plist
+        MARKETING_VERSION: "0.1.0"
+        PRODUCT_BUNDLE_IDENTIFIER: dev.liquidglasstemplates.commandkit.demo
+        PRODUCT_NAME: "$(TARGET_NAME)"
+    scheme:
+      configVariants: []
+      gatherCoverageData: false
