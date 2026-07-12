@@ -11,6 +11,4 @@
 - Menu and Settings shortcuts are rendered from command metadata.
 - Launch at Login reflects current `SMAppService` status instead of a duplicated preference.
 
-This release contains breaking API changes from `0.1.0`. Follow [Migration-0.2.0.md](Migration-0.2.0.md) before updating.
-
-Release publication remains a manual step after final review; this file is the prepared draft body.
+This release contains breaking API changes from `0.1.0`. Follow the [0.2.0 migration guide](https://github.com/mikonyaa/MacMenuBarCommandKit/blob/0.2.0/Docs/Migration-0.2.0.md) before updating.
