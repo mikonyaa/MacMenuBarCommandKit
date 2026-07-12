@@ -12,9 +12,9 @@ MacMenuBarCommandKit separates reusable command UI from app-owned platform behav
 
 ## Command flow
 
-`CommandRegistry` owns command metadata and optional handlers. `CommandStore` owns search query, palette presentation, recent commands, focus mode, and action summaries. The demo app routes commands that need platform APIs, such as opening windows or Settings.
+`CommandRegistry` owns command metadata and synchronous throwing handlers keyed by string-backed `CommandID`. `CommandStore` owns search query, palette presentation, recent commands, focus mode, and execution summaries. The demo app owns all sample IDs, fixtures, clipboard storage, and platform side effects.
 
-This keeps the package reusable: UI can render command metadata without knowing whether a command starts a timer, transforms clipboard text, or opens another window.
+This keeps the package reusable: UI can render command metadata without knowing whether a command starts a timer, stores clipboard text, or opens another window. No default command behavior runs when a handler is absent.
 
 ## Scene model
 

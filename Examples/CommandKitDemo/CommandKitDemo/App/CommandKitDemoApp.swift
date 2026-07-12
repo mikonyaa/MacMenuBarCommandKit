@@ -14,14 +14,23 @@ struct CommandKitDemoApp: App {
     @StateObject private var dashboardStore: DashboardStore
     @StateObject private var settingsStore: SettingsStore
     @StateObject private var launchAtLoginService: LaunchAtLoginService
+    @StateObject private var demoRuntime: DemoCommandRuntime
 
     init() {
         let registry = CommandRegistry(commands: CommandItem.demoCommands)
+        let runtime = DemoCommandRuntime()
         _commandRegistry = StateObject(wrappedValue: registry)
         _commandStore = StateObject(wrappedValue: CommandStore(registry: registry))
-        _dashboardStore = StateObject(wrappedValue: DashboardStore())
+        _dashboardStore = StateObject(
+            wrappedValue: DashboardStore(
+                state: .loaded,
+                activities: ActivityItem.demo,
+                metrics: runtime.metrics
+            )
+        )
         _settingsStore = StateObject(wrappedValue: SettingsStore())
         _launchAtLoginService = StateObject(wrappedValue: LaunchAtLoginService())
+        _demoRuntime = StateObject(wrappedValue: runtime)
     }
 
     var body: some Scene {
@@ -30,27 +39,23 @@ struct CommandKitDemoApp: App {
                 commandStore: commandStore,
                 dashboardStore: dashboardStore,
                 settingsStore: settingsStore,
-                onCommand: handleCommand
+                onCommand: handleCommand,
+                reloadDemoContent: reloadDemoContent
             )
             .preferredColorScheme(settingsStore.settings.themePreference.colorScheme)
             .onAppear {
+                configureHandlers()
                 configureForLaunchArguments()
             }
         }
         .defaultSize(width: 1080, height: 720)
         .commands {
             CommandGroup(replacing: .newItem) {
-                Button("New Note") {
-                    perform(.newNote)
-                }
-                .keyboardShortcut("n", modifiers: .command)
+                commandButton(.newNote)
             }
 
             CommandGroup(replacing: .appSettings) {
-                Button("Settings...") {
-                    openSettings()
-                }
-                .keyboardShortcut(",", modifiers: .command)
+                commandButton(.openSettings)
             }
 
             CommandMenu("CommandKit") {
@@ -59,37 +64,15 @@ struct CommandKitDemoApp: App {
                 }
                 .keyboardShortcut("k", modifiers: .command)
 
-                Button("Start Timer") {
-                    perform(.startTimer)
-                }
-                .keyboardShortcut("T", modifiers: [.command, .shift])
-
-                Button("Capture Clipboard") {
-                    perform(.captureClipboard)
-                }
-                .keyboardShortcut("V", modifiers: [.command, .shift])
-
-                Button("Copy Status Report") {
-                    perform(.copyStatusReport)
-                }
-                .keyboardShortcut("C", modifiers: [.command, .shift])
-
-                Button("Clear Inbox") {
-                    perform(.clearInbox)
-                }
-                .keyboardShortcut("X", modifiers: [.command, .shift])
+                commandButton(.startTimer)
+                commandButton(.captureClipboard)
+                commandButton(.copyStatusReport)
+                commandButton(.clearInbox)
 
                 Divider()
 
-                Button("Open Dashboard") {
-                    openMainWindow()
-                }
-                .keyboardShortcut("d", modifiers: .command)
-
-                Button("Toggle Focus Mode") {
-                    perform(.toggleFocusMode)
-                }
-                .keyboardShortcut("f", modifiers: [.command, .option])
+                commandButton(.openDashboard)
+                commandButton(.toggleFocusMode)
             }
         }
 
@@ -110,7 +93,8 @@ struct CommandKitDemoApp: App {
         Settings {
             CommandKitSettingsView(
                 settingsStore: settingsStore,
-                launchService: launchAtLoginService
+                launchService: launchAtLoginService,
+                commands: commandRegistry.commands
             )
             .preferredColorScheme(settingsStore.settings.themePreference.colorScheme)
         }
@@ -118,30 +102,69 @@ struct CommandKitDemoApp: App {
 
     @MainActor
     private func handleCommand(_ command: CommandItem) {
-        commandStore.perform(command)
-
-        switch command.action {
-        case .openDashboard:
-            openMainWindow()
-        case .openSettings:
-            openSettings()
-        case .captureClipboard:
-            updateClipboardCaptureIfAvailable()
-        case .copyStatusReport:
-            copyStatusReport()
-        case .newNote, .startTimer, .clearInbox, .toggleFocusMode:
-            break
+        let result = commandStore.perform(command)
+        if result.succeeded {
+            demoRuntime.recordSuccessfulRun()
         }
 
-        dashboardStore.record(command: command, summary: commandStore.lastActionSummary)
+        dashboardStore.replaceMetrics(demoRuntime.metrics)
+        dashboardStore.record(
+            command: command,
+            summary: result.summary,
+            tone: demoRuntime.tone(for: command.id, result: result)
+        )
     }
 
     @MainActor
-    private func perform(_ action: CommandAction) {
-        guard let command = commandRegistry.command(for: action) else {
+    private func perform(_ id: CommandID) {
+        guard let command = commandRegistry.command(for: id) else {
             return
         }
         handleCommand(command)
+    }
+
+    @ViewBuilder
+    private func commandButton(_ id: CommandID) -> some View {
+        if let command = commandRegistry.command(for: id) {
+            Button(command.title) {
+                handleCommand(command)
+            }
+            .demoKeyboardShortcut(command.shortcut)
+        }
+    }
+
+    @MainActor
+    private func configureHandlers() {
+        commandRegistry.register(.newNote) { _ in
+            .success(demoRuntime.createNote())
+        }
+        commandRegistry.register(.startTimer) { _ in
+            let summary = demoRuntime.startTimer()
+            commandStore.setFocusModeEnabled(true)
+            return .success(summary)
+        }
+        commandRegistry.register(.captureClipboard) { _ in
+            .success(try demoRuntime.captureClipboard())
+        }
+        commandRegistry.register(.copyStatusReport) { _ in
+            .success(demoRuntime.copyStatusReport(recentCommandCount: commandStore.recentCommands.count))
+        }
+        commandRegistry.register(.clearInbox) { _ in
+            .success(demoRuntime.clearInbox())
+        }
+        commandRegistry.register(.openDashboard) { _ in
+            openMainWindow()
+            return .success("Opened the main dashboard.")
+        }
+        commandRegistry.register(.toggleFocusMode) { _ in
+            let summary = demoRuntime.toggleFocus()
+            commandStore.setFocusModeEnabled(demoRuntime.focusActive)
+            return .success(summary)
+        }
+        commandRegistry.register(.openSettings) { _ in
+            openSettings()
+            return .success("Opened Settings.")
+        }
     }
 
     @MainActor
@@ -156,28 +179,11 @@ struct CommandKitDemoApp: App {
     }
 
     @MainActor
-    private func updateClipboardCaptureIfAvailable() {
-        let text = NSPasteboard.general.string(forType: .string)
-        let trimmedText = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !trimmedText.isEmpty else {
-            commandStore.updateLastActionSummary("Clipboard is empty. Copy text and run again.")
-            return
-        }
-
-        commandStore.updateLastActionSummary("Captured \(trimmedText.count) clipboard characters.")
-    }
-
-    @MainActor
-    private func copyStatusReport() {
-        let report = """
-        CommandKit Status
-        Commands: \(commandStore.registry.commands.count)
-        Recent: \(commandStore.recentCommands.count)
-        Focus: \(commandStore.isFocusModeEnabled ? "active" : "ready")
-        """
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(report, forType: .string)
-        commandStore.updateLastActionSummary("Copied status report to clipboard.")
+    private func reloadDemoContent() {
+        dashboardStore.loadContent(
+            activities: ActivityItem.demo,
+            metrics: demoRuntime.metrics
+        )
     }
 
     @MainActor

@@ -3,13 +3,16 @@ import SwiftUI
 public struct CommandKitSettingsView: View {
     @ObservedObject private var settingsStore: SettingsStore
     @ObservedObject private var launchService: LaunchAtLoginService
+    private let commandItems: [CommandItem]
 
     public init(
         settingsStore: SettingsStore,
-        launchService: LaunchAtLoginService
+        launchService: LaunchAtLoginService,
+        commands: [CommandItem]
     ) {
         self.settingsStore = settingsStore
         self.launchService = launchService
+        commandItems = commands
     }
 
     public var body: some View {
@@ -51,7 +54,6 @@ public struct CommandKitSettingsView: View {
 
             Section("Behavior") {
                 Toggle("Enable demo data", isOn: demoDataBinding)
-                Toggle("Enable notifications placeholder", isOn: notificationsBinding)
                 LabeledContent("Dock Icon") {
                     Text("Visible by default")
                         .foregroundStyle(.secondary)
@@ -91,11 +93,12 @@ public struct CommandKitSettingsView: View {
         Form {
             Section("Keyboard") {
                 LabeledContent("Command Palette", value: "⌘K")
-                LabeledContent("New Note", value: "⌘N")
-                LabeledContent("Settings", value: "⌘,")
+                ForEach(commandItems.filter { $0.shortcut != nil }) { command in
+                    LabeledContent(command.title, value: command.shortcut?.displayValue ?? "")
+                }
             }
             Section("Extending") {
-                Text("Add metadata in CommandItem.demoCommands or replace the registry with your own list. Register handlers in your app entry point.")
+                Text("Provide command metadata to the registry and register handlers in your app entry point.")
                     .foregroundStyle(.secondary)
             }
         }
@@ -125,9 +128,8 @@ public struct CommandKitSettingsView: View {
 
     private var launchAtLoginBinding: Binding<Bool> {
         Binding {
-            settingsStore.settings.launchAtLogin
+            launchService.isEnabled
         } set: { value in
-            settingsStore.update { $0.launchAtLogin = value }
             launchService.setEnabled(value)
         }
     }
@@ -137,14 +139,6 @@ public struct CommandKitSettingsView: View {
             settingsStore.settings.demoDataEnabled
         } set: { value in
             settingsStore.update { $0.demoDataEnabled = value }
-        }
-    }
-
-    private var notificationsBinding: Binding<Bool> {
-        Binding {
-            settingsStore.settings.notificationPlaceholderEnabled
-        } set: { value in
-            settingsStore.update { $0.notificationPlaceholderEnabled = value }
         }
     }
 

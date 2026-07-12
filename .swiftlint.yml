@@ -1,19 +1,17 @@
-disabled_rules:
-  - trailing_comma
-  - multiple_closures_with_trailing_closure
+excluded:
+  - .build
+  - .swiftpm
 
 line_length:
-  warning: 140
-  error: 180
-
-type_body_length:
-  warning: 360
-  error: 520
-
-file_length:
-  warning: 520
-  error: 800
+  warning: 160
+  error: 200
 
 identifier_name:
   min_length:
     warning: 2
+
+type_body_length:
+  warning: 350
+  error: 400
+
+reporter: xcode

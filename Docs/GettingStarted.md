@@ -20,7 +20,9 @@ The script builds the macOS target, kills any running `CommandKitDemo` process, 
 ## Use as a template
 
 1. Rename the demo app and bundle identifier.
-2. Replace `CommandItem.demoCommands` with your command set.
-3. Replace `ActivityItem.demo` and `MetricCard.demo` with your local product state.
+2. Define app-owned `CommandID` constants and command metadata.
+3. Initialize `DashboardStore` with your product activities and metrics.
 4. Register command handlers in the app entry point.
 5. Review Launch at Login behavior in a signed app bundle before shipping.
+
+The demo fixtures are under `Examples/CommandKitDemo`; the package does not install sample commands or side effects by default.

@@ -3,11 +3,9 @@ import Foundation
 @MainActor
 public final class SettingsStore: ObservableObject {
     public enum Key {
-        public static let launchAtLogin = "MacMenuBarCommandKit.launchAtLogin"
         public static let menuBarPresentation = "MacMenuBarCommandKit.menuBarPresentation"
         public static let themePreference = "MacMenuBarCommandKit.themePreference"
         public static let demoDataEnabled = "MacMenuBarCommandKit.demoDataEnabled"
-        public static let notificationPlaceholderEnabled = "MacMenuBarCommandKit.notificationPlaceholderEnabled"
     }
 
     @Published public private(set) var settings: AppSettings
@@ -31,11 +29,9 @@ public final class SettingsStore: ObservableObject {
     }
 
     private func persist(_ settings: AppSettings) {
-        defaults.set(settings.launchAtLogin, forKey: Key.launchAtLogin)
         defaults.set(settings.menuBarPresentation.rawValue, forKey: Key.menuBarPresentation)
         defaults.set(settings.themePreference.rawValue, forKey: Key.themePreference)
         defaults.set(settings.demoDataEnabled, forKey: Key.demoDataEnabled)
-        defaults.set(settings.notificationPlaceholderEnabled, forKey: Key.notificationPlaceholderEnabled)
     }
 
     private static func load(from defaults: UserDefaults) -> AppSettings {
@@ -43,11 +39,9 @@ public final class SettingsStore: ObservableObject {
         let themeValue = defaults.string(forKey: Key.themePreference)
 
         return AppSettings(
-            launchAtLogin: defaults.bool(forKey: Key.launchAtLogin),
             menuBarPresentation: menuValue.flatMap(MenuBarPresentation.init(rawValue:)) ?? .balanced,
             themePreference: themeValue.flatMap(AppThemePreference.init(rawValue:)) ?? .system,
-            demoDataEnabled: defaults.object(forKey: Key.demoDataEnabled) as? Bool ?? true,
-            notificationPlaceholderEnabled: defaults.bool(forKey: Key.notificationPlaceholderEnabled)
+            demoDataEnabled: defaults.object(forKey: Key.demoDataEnabled) as? Bool ?? true
         )
     }
 }

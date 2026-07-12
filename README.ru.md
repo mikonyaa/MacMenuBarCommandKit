@@ -17,7 +17,8 @@ Production-ready SwiftUI шаблон для macOS menu bar утилит с comm
 - Reusable Swift Package `MacMenuBarCommandKit`.
 - Запускаемый macOS demo app: `Examples/CommandKitDemo/CommandKitDemo.xcodeproj`.
 - Menu bar dashboard с quick commands, статусом, поиском и локальными метриками.
-- `CommandPalette`, `CommandRegistry`, `CommandStore`, `DashboardStore`, `SettingsStore`.
+- `CommandPalette` с arrow navigation, Return, Escape и focus restoration.
+- String-backed `CommandID`, sync throwing handlers и явные success/failure results.
 - Native Settings scene с General, Appearance, Commands и About.
 - `LaunchAtLoginService` для `SMAppService` со статусами enabled, disabled, requires approval, unsupported и error.
 - Loaded, loading, empty и error состояния.
@@ -55,11 +56,12 @@ open Examples/CommandKitDemo/CommandKitDemo.xcodeproj
 
 ## Как добавить команду
 
-Добавь `CommandItem`, затем зарегистрируй handler в app entry point:
+Определи app-owned `CommandID`, добавь `CommandItem`, затем зарегистрируй handler в app entry point:
 
 ```swift
 registry.register(.copyStatusReport) { command in
-    print("Run \(command.title)")
+    try copyReport()
+    return .success("Готово: \(command.title)")
 }
 ```
 
@@ -70,6 +72,7 @@ registry.register(.copyStatusReport) { command in
 - [Getting started](Docs/GettingStarted.md)
 - [Architecture](Docs/Architecture.md)
 - [Commands](Docs/Commands.md)
+- [Migration 0.1.0 → 0.2.0](Docs/Migration-0.2.0.md)
 - [Customization](Docs/Customization.md)
 - [Accessibility](Docs/Accessibility.md)
 - [Release checklist](Docs/ReleaseChecklist.md)

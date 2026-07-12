@@ -1,6 +1,6 @@
 # Commands
 
-Commands are defined by metadata and executed by handlers.
+Commands are defined by metadata and executed by app-owned handlers.
 
 ## Metadata
 
@@ -12,13 +12,12 @@ Commands are defined by metadata and executed by handlers.
 - `systemImage`
 - `category`
 - `shortcut`
-- `action`
 
-The UI uses this metadata to render rows, search results, shortcuts, and menu bar actions.
+The `id` is a string-backed `CommandID` owned by your app. The UI uses this metadata to render rows, search results, shortcuts, and menu bar actions.
 
 ## Search
 
-`CommandRegistry.filteredCommands(matching:)` normalizes query text and requires every token to match the command's searchable text. Search covers title, subtitle, category, shortcut display value, and action id.
+`CommandRegistry.filteredCommands(matching:)` normalizes query text and requires every token to match the command's searchable text. Search covers title, subtitle, category, shortcut display value, and command ID.
 
 ## Handlers
 
@@ -26,11 +25,12 @@ Register handlers where your app owns side effects:
 
 ```swift
 registry.register(.newNote) { command in
-    createNote(title: command.title)
+    try createNote(title: command.title)
+    return .success("Created a local note.")
 }
 ```
 
-Window and Settings actions are routed in the demo app because they use SwiftUI environment actions.
+Handlers are synchronous and may throw. `CommandStore` converts returned values and thrown errors into a visible `CommandExecutionResult`; there is no speculative async command layer. Window, Settings, pasteboard, and sample state mutations stay in the demo app.
 
 ## Shortcuts
 
@@ -46,8 +46,10 @@ The demo exposes:
 - `⌘D`: Open Dashboard
 - `⌘⌥F`: Toggle Focus Mode
 
-Avoid registering the same shortcut in multiple command menus.
+The demo reads each command shortcut from `CommandItem` when building menus and the Settings summary. Avoid copying shortcut literals into another source of truth.
+
+The palette supports Up/Down navigation, Return to execute, Escape to close, and restores the previous first responder when dismissed.
 
 ## Demo command scope
 
-The template ships with eight commands because a menu bar utility should stay quick to scan. The first commands are daily actions, while navigation and settings remain searchable from the palette and visible in the main window.
+The eight sample commands, their IDs, fixtures, and default side effects live only under `Examples/CommandKitDemo`. The package registry starts empty.

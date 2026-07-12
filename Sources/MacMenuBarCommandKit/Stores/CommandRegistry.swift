@@ -2,12 +2,12 @@ import Foundation
 
 @MainActor
 public final class CommandRegistry: ObservableObject {
-    public typealias Handler = @MainActor (CommandItem) -> Void
+    public typealias Handler = @MainActor (CommandItem) throws -> CommandExecutionResult
 
     @Published public private(set) var commands: [CommandItem]
-    private var handlers: [CommandAction: Handler]
+    private var handlers: [CommandID: Handler]
 
-    public init(commands: [CommandItem] = CommandItem.demoCommands) {
+    public init(commands: [CommandItem] = []) {
         self.commands = commands
         handlers = [:]
     }
@@ -16,16 +16,16 @@ public final class CommandRegistry: ObservableObject {
         self.commands = commands
     }
 
-    public func register(_ action: CommandAction, handler: @escaping Handler) {
-        handlers[action] = handler
+    public func register(_ id: CommandID, handler: @escaping Handler) {
+        handlers[id] = handler
     }
 
-    public func handler(for action: CommandAction) -> Handler? {
-        handlers[action]
+    public func handler(for id: CommandID) -> Handler? {
+        handlers[id]
     }
 
-    public func command(for action: CommandAction) -> CommandItem? {
-        commands.first { $0.action == action }
+    public func command(for id: CommandID) -> CommandItem? {
+        commands.first { $0.id == id }
     }
 
     public func filteredCommands(matching query: String) -> [CommandItem] {

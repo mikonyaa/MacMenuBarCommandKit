@@ -3,68 +3,70 @@ import XCTest
 
 @MainActor
 final class CommandKitTests: XCTestCase {
-    func testRegistryFiltersByTitleCategoryAndShortcut() {
-        let registry = CommandRegistry(commands: CommandItem.demoCommands)
+    private let noteID: CommandID = "note.new"
+    private let timerID: CommandID = "focus.start"
 
-        XCTAssertEqual(registry.filteredCommands(matching: "timer").map(\.action), [.startTimer])
-        XCTAssertEqual(registry.filteredCommands(matching: "clipboard inbox").map(\.action), [.captureClipboard])
-        XCTAssertEqual(registry.filteredCommands(matching: "status report").map(\.action), [.copyStatusReport])
-        XCTAssertEqual(registry.filteredCommands(matching: "cmd unknown").count, 0)
+    func testCommandIDIsStringBackedAndCodable() throws {
+        let encoded = try JSONEncoder().encode(noteID)
+        let decoded = try JSONDecoder().decode(CommandID.self, from: encoded)
+
+        XCTAssertEqual(decoded.rawValue, "note.new")
+        XCTAssertEqual(decoded, noteID)
     }
 
-    func testDemoCommandsCoverCoreMenuBarWorkflows() {
-        XCTAssertEqual(CommandItem.demoCommands.count, 8)
-        XCTAssertEqual(
-            Set(CommandItem.demoCommands.map(\.action)),
-            Set(CommandAction.allCases)
-        )
-    }
-
-    func testCommandStorePerformsAndTracksRecentCommands() {
-        let registry = CommandRegistry(commands: CommandItem.demoCommands)
-        let store = CommandStore(registry: registry)
-
-        store.perform(.newNote)
-        store.perform(.startTimer)
-
-        XCTAssertEqual(store.recentCommands.first?.action, .startTimer)
-        XCTAssertEqual(store.recentCommands.map(\.action), [.startTimer, .newNote])
-        XCTAssertTrue(store.isFocusModeEnabled)
-        XCTAssertEqual(store.lastActionSummary, "Started a 25-minute focus timer.")
-    }
-
-    func testDashboardStoreRecordsCommandAsVisibleActivity() {
-        let store = DashboardStore()
-        let command = CommandItem.demoCommands.first { $0.action == .newNote }!
-
-        store.record(command: command, summary: "Created a local note.")
-
-        XCTAssertEqual(store.state, .loaded)
-        XCTAssertEqual(store.activities.first?.title, "New Note")
-        XCTAssertEqual(store.activities.first?.subtitle, "Created a local note.")
-        XCTAssertEqual(store.metrics.first?.value, "43")
-    }
-
-    func testDashboardStoreRecordsClearInboxSideEffect() {
-        let store = DashboardStore()
-        let command = CommandItem.demoCommands.first { $0.action == .clearInbox }!
-
-        store.record(command: command, summary: "Cleared the local inbox.")
-
-        XCTAssertEqual(store.metrics.first { $0.id == "queue" }?.value, "0")
-        XCTAssertEqual(store.activities.first?.title, "Clear Inbox")
-    }
-
-    func testSettingsStoreLoadsDefaultsAndPersistsUpdates() {
-        let suiteName = "MacMenuBarCommandKitTests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
-        defer {
-            defaults.removePersistentDomain(forName: suiteName)
+    func testRegistryFiltersMetadataAndResolvesHandlersByID() throws {
+        let commands = sampleCommands
+        let registry = CommandRegistry(commands: commands)
+        registry.register(noteID) { command in
+            .success("Ran \(command.title)")
         }
 
-        let store = SettingsStore(defaults: defaults)
-        XCTAssertEqual(store.settings, .defaults)
+        XCTAssertEqual(registry.filteredCommands(matching: "note ⌘n").map(\.id), [noteID])
+        XCTAssertEqual(registry.command(for: timerID)?.title, "Start Timer")
+        XCTAssertEqual(try registry.handler(for: noteID)?(commands[0]), .success("Ran New Note"))
+    }
 
+    func testCommandStoreUsesRegisteredResultAndTracksRecentCommands() {
+        let registry = CommandRegistry(commands: sampleCommands)
+        registry.register(noteID) { _ in .success("Created a local note.") }
+        registry.register(timerID) { _ in .success("Started a focus timer.") }
+        let store = CommandStore(registry: registry)
+
+        XCTAssertEqual(store.perform(noteID), .success("Created a local note."))
+        XCTAssertEqual(store.perform(timerID), .success("Started a focus timer."))
+        XCTAssertEqual(store.recentCommands.map(\.id), [timerID, noteID])
+        XCTAssertEqual(store.lastActionSummary, "Started a focus timer.")
+    }
+
+    func testCommandStoreReportsMissingAndThrowingHandlers() {
+        enum TestFailure: Error { case expected }
+
+        let registry = CommandRegistry(commands: sampleCommands)
+        registry.register(noteID) { _ in throw TestFailure.expected }
+        let store = CommandStore(registry: registry)
+
+        XCTAssertFalse(store.perform(timerID).succeeded)
+        XCTAssertFalse(store.perform(noteID).succeeded)
+        XCTAssertTrue(store.lastActionSummary.contains("New Note"))
+    }
+
+    func testDashboardRecordsGenericCommandActivity() {
+        let store = DashboardStore(state: .loaded)
+        let command = sampleCommands[0]
+
+        store.record(command: command, summary: "Created a local note.", tone: .accent)
+
+        XCTAssertEqual(store.activities.first?.title, "New Note")
+        XCTAssertEqual(store.activities.first?.subtitle, "Created a local note.")
+        XCTAssertEqual(store.activities.first?.tone, .accent)
+    }
+
+    func testSettingsStorePersistsOnlyReusablePreferences() {
+        let suiteName = "MacMenuBarCommandKitTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
         store.update {
             $0.menuBarPresentation = .compact
             $0.themePreference = .dark
@@ -77,26 +79,29 @@ final class CommandKitTests: XCTestCase {
         XCTAssertFalse(reloaded.settings.demoDataEnabled)
     }
 
-    func testDashboardStoreStateTransitionsAreDeterministic() {
-        let store = DashboardStore()
-        XCTAssertEqual(store.state, .loaded)
-        XCTAssertFalse(store.activities.isEmpty)
-        XCTAssertFalse(store.metrics.isEmpty)
-
-        store.showEmpty()
-        XCTAssertEqual(store.state, .empty)
-        XCTAssertTrue(store.activities.isEmpty)
-
-        store.showError("Failure")
-        XCTAssertEqual(store.state, .error("Failure"))
-
-        store.loadDemoContent()
-        XCTAssertEqual(store.state, .loaded)
-        XCTAssertEqual(store.metrics.count, MetricCard.demo.count)
-    }
-
     func testShortcutDisplayUsesMacSymbols() {
         let shortcut = CommandShortcut(modifiers: [.command, .option], key: "f")
         XCTAssertEqual(shortcut.displayValue, "⌘⌥F")
+    }
+
+    private var sampleCommands: [CommandItem] {
+        [
+            CommandItem(
+                id: noteID,
+                title: "New Note",
+                subtitle: "Capture a short local note.",
+                systemImage: "square.and.pencil",
+                category: .productivity,
+                shortcut: CommandShortcut(key: "N")
+            ),
+            CommandItem(
+                id: timerID,
+                title: "Start Timer",
+                subtitle: "Begin a focus block.",
+                systemImage: "timer",
+                category: .focus,
+                shortcut: CommandShortcut(modifiers: [.command, .shift], key: "T")
+            )
+        ]
     }
 }

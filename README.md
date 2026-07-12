@@ -18,7 +18,7 @@ MacMenuBarCommandKit is a reusable starter kit for building native menu bar util
 - `MacMenuBarCommandKit`, a zero-dependency Swift Package.
 - A runnable macOS demo app: `Examples/CommandKitDemo/CommandKitDemo.xcodeproj`.
 - Dock-visible launch behavior with a menu bar extra.
-- `CommandPalette` with search, shortcuts, categories, and metadata-first commands.
+- Keyboard-first `CommandPalette` with search, arrow navigation, Return, Escape, and focus restoration.
 - `CommandRegistry`, `CommandStore`, `DashboardStore`, `SettingsStore`, and `LaunchAtLoginService`.
 - Native SwiftUI `Settings` scene with General, Appearance, Commands, and About tabs.
 - `SMAppService` Launch at Login wrapper with enabled, disabled, approval, unsupported, and error states.
@@ -84,22 +84,35 @@ open CommandKitDemo.xcodeproj
 
 ## Add a command
 
-Commands are metadata first. Add a `CommandItem` and register behavior where your app owns platform actions:
+Add the package in Xcode or declare the released dependency in `Package.swift`:
 
 ```swift
+.package(
+    url: "https://github.com/mikonyaa/MacMenuBarCommandKit.git",
+    from: "0.2.0"
+)
+```
+
+Commands are metadata first. Define a stable app-owned identifier, add a `CommandItem`, and register synchronous behavior where your app owns platform actions:
+
+```swift
+extension CommandID {
+    static let exportSummary: CommandID = "export.summary"
+}
+
 let command = CommandItem(
-    id: "export-summary",
+    id: .exportSummary,
     title: "Export Summary",
     subtitle: "Save today's local status as Markdown.",
     systemImage: "square.and.arrow.down",
     category: .productivity,
-    shortcut: CommandShortcut(modifiers: [.command, .shift], key: "E"),
-    action: .copyStatusReport
+    shortcut: CommandShortcut(modifiers: [.command, .shift], key: "E")
 )
 
-registry.replaceCommands(CommandItem.demoCommands + [command])
-registry.register(.copyStatusReport) { command in
-    print("Run \(command.title)")
+registry.replaceCommands(registry.commands + [command])
+registry.register(.exportSummary) { command in
+    try exportSummary()
+    return .success("Exported \(command.title).")
 }
 ```
 
@@ -107,7 +120,7 @@ See [Commands](Docs/Commands.md) for extension patterns.
 
 ## Replace demo data
 
-Replace `ActivityItem.demo`, `MetricCard.demo`, or initialize `DashboardStore` with your product data. The template has no network, backend, analytics, or paid dependency.
+Demo command IDs, fixtures, clipboard storage, and sample side effects live under `Examples/CommandKitDemo`. The package starts with empty registries and dashboard data, so adopters do not inherit sample business behavior.
 
 ## Project structure
 
@@ -127,6 +140,7 @@ MacMenuBarCommandKit/
 - [Getting started](Docs/GettingStarted.md)
 - [Architecture](Docs/Architecture.md)
 - [Commands](Docs/Commands.md)
+- [Migration from 0.1.0 to 0.2.0](Docs/Migration-0.2.0.md)
 - [Customization](Docs/Customization.md)
 - [Accessibility](Docs/Accessibility.md)
 - [Release checklist](Docs/ReleaseChecklist.md)
@@ -146,11 +160,10 @@ xcodebuild \
 
 ## Roadmap
 
-The 0.1.0 scope is intentionally focused. Future releases should stay optional:
+The `0.2.0` scope is intentionally focused. Future releases should stay optional:
 
 - App Intents sample commands.
 - Optional no-Dock accessory mode recipe.
-- UI tests for command palette keyboard navigation.
 - Notification authorization recipe.
 - Real app icon and signed helper documentation.
 

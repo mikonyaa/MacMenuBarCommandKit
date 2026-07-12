@@ -44,22 +44,35 @@ public final class CommandStore: ObservableObject {
         lastActionSummary = summary
     }
 
-    public func perform(_ command: CommandItem) {
+    @discardableResult
+    public func perform(_ command: CommandItem) -> CommandExecutionResult {
         remember(command)
 
-        if let handler = registry.handler(for: command.action) {
-            handler(command)
-            return
+        guard let handler = registry.handler(for: command.id) else {
+            let result = CommandExecutionResult.failure("No handler is registered for \(command.title).")
+            lastActionSummary = result.summary
+            return result
         }
 
-        applyDefaultSideEffect(for: command)
+        do {
+            let result = try handler(command)
+            lastActionSummary = result.summary
+            return result
+        } catch {
+            let result = CommandExecutionResult.failure("Could not run \(command.title): \(error.localizedDescription)")
+            lastActionSummary = result.summary
+            return result
+        }
     }
 
-    public func perform(_ action: CommandAction) {
-        guard let command = registry.command(for: action) else {
-            return
+    @discardableResult
+    public func perform(_ id: CommandID) -> CommandExecutionResult {
+        guard let command = registry.command(for: id) else {
+            let result = CommandExecutionResult.failure("No command metadata exists for \(id.rawValue).")
+            lastActionSummary = result.summary
+            return result
         }
-        perform(command)
+        return perform(command)
     }
 
     private func remember(_ command: CommandItem) {
@@ -70,26 +83,7 @@ public final class CommandStore: ObservableObject {
         }
     }
 
-    private func applyDefaultSideEffect(for command: CommandItem) {
-        switch command.action {
-        case .newNote:
-            lastActionSummary = "Created a local note."
-        case .startTimer:
-            isFocusModeEnabled = true
-            lastActionSummary = "Started a 25-minute focus timer."
-        case .captureClipboard:
-            lastActionSummary = "Captured clipboard text."
-        case .copyStatusReport:
-            lastActionSummary = "Copied today's status report."
-        case .clearInbox:
-            lastActionSummary = "Cleared the local inbox."
-        case .openDashboard:
-            lastActionSummary = "Opened the main dashboard."
-        case .toggleFocusMode:
-            isFocusModeEnabled.toggle()
-            lastActionSummary = isFocusModeEnabled ? "Focus mode enabled." : "Focus mode disabled."
-        case .openSettings:
-            lastActionSummary = "Opened Settings."
-        }
+    public func setFocusModeEnabled(_ isEnabled: Bool) {
+        isFocusModeEnabled = isEnabled
     }
 }

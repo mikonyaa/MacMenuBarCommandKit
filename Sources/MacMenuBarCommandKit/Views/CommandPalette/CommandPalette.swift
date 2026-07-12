@@ -1,9 +1,13 @@
+import AppKit
 import SwiftUI
 
 public struct CommandPalette: View {
     @ObservedObject private var commandStore: CommandStore
     private let onCommand: (CommandItem) -> Void
     @FocusState private var searchFocused: Bool
+    @State private var selectedCommandID: CommandID?
+    @State private var previousFirstResponder: NSResponder?
+    @State private var previousWindow: NSWindow?
 
     public init(
         commandStore: CommandStore,
@@ -27,8 +31,22 @@ public struct CommandPalette: View {
         }
         .accessibilityAddTraits(.isModal)
         .onAppear {
+            previousWindow = NSApp.keyWindow
+            previousFirstResponder = previousWindow?.firstResponder
+            selectedCommandID = commandStore.filteredCommands.first?.id
             searchFocused = true
         }
+        .onDisappear {
+            guard let responder = previousFirstResponder else { return }
+            previousWindow?.makeFirstResponder(responder)
+        }
+        .onChange(of: commandStore.filteredCommands.map(\.id)) { _, ids in
+            if let selectedCommandID, ids.contains(selectedCommandID) {
+                return
+            }
+            selectedCommandID = ids.first
+        }
+        .onMoveCommand(perform: moveSelection)
     }
 
     private var header: some View {
@@ -74,8 +92,19 @@ public struct CommandPalette: View {
                         } label: {
                             CommandRow(command: command)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .background {
+                                    if selectedCommandID == command.id {
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .fill(Color.accentColor.opacity(0.14))
+                                    }
+                                }
                         }
                         .buttonStyle(.plain)
+                        .onHover { isHovering in
+                            if isHovering {
+                                selectedCommandID = command.id
+                            }
+                        }
                     }
                 }
                 .padding(10)
@@ -84,11 +113,30 @@ public struct CommandPalette: View {
     }
 
     private func submitTopResult() {
-        guard let command = commandStore.filteredCommands.first else {
+        let commands = commandStore.filteredCommands
+        guard let command = commands.first(where: { $0.id == selectedCommandID }) ?? commands.first else {
             return
         }
 
         onCommand(command)
         commandStore.dismissPalette()
+    }
+
+    private func moveSelection(_ direction: MoveCommandDirection) {
+        let commands = commandStore.filteredCommands
+        guard !commands.isEmpty else { return }
+
+        let currentIndex = selectedCommandID.flatMap { id in
+            commands.firstIndex { $0.id == id }
+        } ?? 0
+
+        switch direction {
+        case .up:
+            selectedCommandID = commands[max(0, currentIndex - 1)].id
+        case .down:
+            selectedCommandID = commands[min(commands.count - 1, currentIndex + 1)].id
+        default:
+            break
+        }
     }
 }

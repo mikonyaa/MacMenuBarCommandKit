@@ -27,6 +27,7 @@ public enum LaunchAtLoginStatus: Equatable, Sendable {
 @MainActor
 public protocol LaunchAtLoginControlling: AnyObject {
     var status: LaunchAtLoginStatus { get }
+    var isEnabled: Bool { get }
     func refresh()
     func setEnabled(_ isEnabled: Bool)
 }
@@ -37,6 +38,10 @@ public final class LaunchAtLoginService: ObservableObject, LaunchAtLoginControll
 
     public init() {
         status = Self.readStatus()
+    }
+
+    public var isEnabled: Bool {
+        status == .enabled
     }
 
     public func refresh() {

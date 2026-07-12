@@ -12,8 +12,11 @@
 - [ ] Menu bar dashboard opens
 - [ ] Main window opens from menu bar
 - [ ] Settings opens
-- [ ] `⌘K`, `⌘N`, and `⌘,` work
+- [ ] Up/Down, Return, Escape, `⌘K`, `⌘N`, and `⌘,` work
+- [ ] Keyboard focus returns to the previous control after closing the palette
+- [ ] Captured clipboard text remains in the demo runtime until Clear Inbox
 - [ ] Launch at Login status is reviewed in a signed app
+- [ ] Launch at Login toggle matches current `SMAppService` status after reopening Settings
 
 ## Assets
 
@@ -27,5 +30,6 @@
 
 - [ ] README and README.ru match the current code
 - [ ] CHANGELOG is updated
-- [ ] Release tag is created
+- [ ] `0.2.0` release draft and migration guide are reviewed
+- [ ] Release tag is created only after manual approval
 - [ ] Apple Design Templates catalog is updated

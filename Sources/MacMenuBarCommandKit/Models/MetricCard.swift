@@ -41,30 +41,4 @@ public struct MetricCard: Identifiable, Hashable, Codable, Sendable {
         self.trend = trend
     }
 
-    public static let demo: [MetricCard] = [
-        MetricCard(
-            id: "commands",
-            title: "Commands",
-            value: "42",
-            caption: "run today",
-            systemImage: "command",
-            trend: .up
-        ),
-        MetricCard(
-            id: "focus",
-            title: "Focus",
-            value: "2.5h",
-            caption: "protected",
-            systemImage: "moon.circle",
-            trend: .flat
-        ),
-        MetricCard(
-            id: "queue",
-            title: "Inbox",
-            value: "7",
-            caption: "items waiting",
-            systemImage: "tray.full",
-            trend: .down
-        )
-    ]
 }
