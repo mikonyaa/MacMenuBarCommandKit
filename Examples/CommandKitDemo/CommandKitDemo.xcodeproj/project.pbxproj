@@ -16,12 +16,12 @@
 
 /* Begin PBXFileReference section */
 		203A6F3A768F92126C6E2F87 /* CommandKitDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CommandKitDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		31260236F2790D3A1F7A8F43 /* mac-command-kit-hardening */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "mac-command-kit-hardening"; path = ../..; sourceTree = SOURCE_ROOT; };
 		58FF5E38917AA9C5800B78BB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		688C501A0A66740DFDE79025 /* DemoRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRootView.swift; sourceTree = "<group>"; };
 		79ECF76FE39547841C8B034E /* DemoCommandCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoCommandCatalog.swift; sourceTree = "<group>"; };
 		93B0F767E241B2161053C735 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		9842B70D0C3238AD75AB0A80 /* CommandKitDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandKitDemoApp.swift; sourceTree = "<group>"; };
+		D6B91165A73F8CB7F44F18F9 /* MacMenuBarCommandKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MacMenuBarCommandKit; path = ../..; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,7 +48,7 @@
 		4E37BF16EA0C7D0427B4AADF /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				31260236F2790D3A1F7A8F43 /* mac-command-kit-hardening */,
+				D6B91165A73F8CB7F44F18F9 /* MacMenuBarCommandKit */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
