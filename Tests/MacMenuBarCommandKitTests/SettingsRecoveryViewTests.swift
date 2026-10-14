@@ -24,7 +24,10 @@ final class SettingsRecoveryViewTests: XCTestCase {
         defer { window.close() }
         try await settle()
         let error = try text(in: window)
-        XCTAssertTrue(error.contains("Injected registration failure"), error)
+        // Vision versions may read the small caption's i/l differently. Verify
+        // the unique detail marker and recovery control; the model test checks
+        // the complete typed error value independently.
+        XCTAssertTrue(error.contains("Injected registration"), error)
         XCTAssertTrue(error.contains("Retry Status Check"), error)
         controller.nextStatus = .requiresApproval
         NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: nil)
