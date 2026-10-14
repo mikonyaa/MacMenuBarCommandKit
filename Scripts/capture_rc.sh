@@ -17,6 +17,7 @@ commandkit_capture_bundle="$commandkit_capture_build/DerivedData/Build/Products/
 commandkit_capture_executable="$commandkit_capture_bundle/Contents/MacOS/CommandKitDemo"
 commandkit_capture_pid=""
 commandkit_capture_suite="CommandKitTests.Verify.Capture.$(uuidgen)"
+echo "Owned native capture build: $commandkit_capture_build" >&2
 cleanup_capture() {
   if [[ -n "$commandkit_capture_pid" ]]; then
     xcrun swift "$commandkit_capture_root/Tools/owned_app.swift" stop "$commandkit_capture_pid" \

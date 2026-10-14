@@ -147,6 +147,7 @@ struct CommandKitDemoApp: App {
         do {
             try await Task.sleep(for: .milliseconds(600))
             var captureWindow: NSWindow?
+            let existingWindows = Set(NSApp.windows.map(ObjectIdentifier.init))
             if surface == "settings" {
                 sceneActions.openSettings()
             } else if surface == "command-palette" {
@@ -165,9 +166,16 @@ struct CommandKitDemoApp: App {
                 captureWindow = window
             }
             try await Task.sleep(for: .milliseconds(600))
-            guard let window = captureWindow ?? NSApp.keyWindow else { return }
+            if captureWindow == nil {
+                if surface == "settings" {
+                    captureWindow = NSApp.windows.first { !existingWindows.contains(ObjectIdentifier($0)) && $0.contentView != nil }
+                } else {
+                    captureWindow = NSApp.windows.first { $0.title == "CommandKit" }
+                }
+            }
+            guard let window = captureWindow else { return }
             try DemoCapture.write(window: window, directory: directory, surface: surface, sourceCommit: configuration.captureCommit)
-            captureWindow?.close()
+            if surface == "menu-dashboard" { captureWindow?.close() }
         } catch { NSLog("Native content capture failed: %@", error.localizedDescription) }
     }
 
