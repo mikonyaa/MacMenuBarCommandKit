@@ -1,8 +1,9 @@
+import AppKit
 import SwiftUI
 
 public struct CommandKitSettingsView: View {
     @ObservedObject private var settingsStore: SettingsStore
-    @ObservedObject private var launchService: LaunchAtLoginService
+    @StateObject private var launchModel: LaunchAtLoginViewModel
     private let commandItems: [CommandItem]
 
     public init(
@@ -10,8 +11,16 @@ public struct CommandKitSettingsView: View {
         launchService: LaunchAtLoginService,
         commands: [CommandItem]
     ) {
+        self.init(settingsStore: settingsStore, launchController: launchService, commands: commands)
+    }
+
+    public init(
+        settingsStore: SettingsStore,
+        launchController: any LaunchAtLoginControlling,
+        commands: [CommandItem]
+    ) {
         self.settingsStore = settingsStore
-        self.launchService = launchService
+        _launchModel = StateObject(wrappedValue: LaunchAtLoginViewModel(controller: launchController))
         commandItems = commands
     }
 
@@ -29,7 +38,10 @@ public struct CommandKitSettingsView: View {
         .frame(width: 560, height: 390)
         .scenePadding()
         .onAppear {
-            launchService.refresh()
+            launchModel.refresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            launchModel.refresh()
         }
     }
 
@@ -47,13 +59,19 @@ public struct CommandKitSettingsView: View {
                 HStack {
                     Text("Status")
                     Spacer()
-                    Text(launchService.status.title)
+                    Text(launchModel.status.title)
                         .foregroundStyle(statusColor)
+                        .accessibilityIdentifier("commandkit.login.status")
                 }
+                launchRecovery
             }
 
             Section("Behavior") {
                 Toggle("Enable demo data", isOn: demoDataBinding)
+                    .accessibilityIdentifier("commandkit.settings.demo-data")
+                Text("The demo removes only sample entries when disabled. Your session entries and command attempts remain.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 LabeledContent("Dock Icon") {
                     Text("Visible by default")
                         .foregroundStyle(.secondary)
@@ -64,6 +82,32 @@ public struct CommandKitSettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private var launchRecovery: some View {
+        switch launchModel.status {
+        case .requiresApproval:
+            Text("Registered, awaiting approval. Allow this app in Login Items, then return here.")
+                .font(.caption)
+            Button("Open Login Items Settings") { launchModel.openLoginItemsSettings() }
+                .accessibilityIdentifier("commandkit.login.approval")
+            Button("Refresh Status") { launchModel.refresh() }
+        case .error(let message):
+            Text(message)
+                .font(.caption)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("commandkit.login.error")
+            Button("Retry Status Check") { launchModel.refresh() }
+                .accessibilityIdentifier("commandkit.login.retry")
+        case .unsupported:
+            Text("Login registration is unavailable for this bundle. Use a signed app installed at a stable path.")
+                .font(.caption)
+            Button("Refresh Status") { launchModel.refresh() }
+        case .enabled, .disabled:
+            EmptyView()
+        }
     }
 
     private var appearance: some View {
@@ -128,9 +172,9 @@ public struct CommandKitSettingsView: View {
 
     private var launchAtLoginBinding: Binding<Bool> {
         Binding {
-            launchService.isEnabled
+            launchModel.isEnabled
         } set: { value in
-            launchService.setEnabled(value)
+            launchModel.setEnabled(value)
         }
     }
 
@@ -159,7 +203,7 @@ public struct CommandKitSettingsView: View {
     }
 
     private var statusColor: Color {
-        switch launchService.status {
+        switch launchModel.status {
         case .enabled:
             .green
         case .disabled:

@@ -9,3 +9,6 @@ dist/
 *.xccheckout
 *.xcscmblueprint
 Assets/GIFs/showcase-source.mov
+
+*.profraw
+*.profdata

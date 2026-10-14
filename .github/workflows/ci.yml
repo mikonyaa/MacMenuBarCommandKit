@@ -6,9 +6,15 @@ on:
     branches:
       - main
       - "release/**"
+      - "codex/quality-rc-*"
     tags:
-      - "v*"
+      - "[0-9]*.[0-9]*.[0-9]*"
   workflow_dispatch:
+    inputs:
+      native_ui:
+        description: "Attempt native XCUI journeys (requires an authenticated GUI session)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -21,36 +27,10 @@ env:
   DEMO_PROJECT: Examples/CommandKitDemo/CommandKitDemo.xcodeproj
   DEMO_SCHEME: CommandKitDemo
   DEMO_DESTINATION: "platform=macOS"
-  XCODEGEN_VERSION: "2.45.4"
 
 jobs:
-  fast:
-    name: PR · current
-    if: github.event_name == 'pull_request'
-    runs-on: macos-26
-    timeout-minutes: 20
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_26.5.app/Contents/Developer
-    steps:
-      - uses: actions/checkout@v4
-      - name: Ensure SwiftLint
-        run: command -v swiftlint >/dev/null || brew install swiftlint
-      - name: Test package
-        run: swift test
-      - name: Lint
-        run: swiftlint lint --strict
-      - name: Build demo
-        run: |
-          xcodebuild \
-            -project "$DEMO_PROJECT" \
-            -scheme "$DEMO_SCHEME" \
-            -destination "$DEMO_DESTINATION" \
-            CODE_SIGNING_ALLOWED=NO \
-            build
-
-  full:
-    name: Full · ${{ matrix.name }}
-    if: github.event_name != 'pull_request'
+  validate:
+    name: ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
@@ -66,46 +46,84 @@ jobs:
     env:
       DEVELOPER_DIR: ${{ matrix.developer_dir }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Ensure SwiftLint
-        run: command -v swiftlint >/dev/null || brew install swiftlint
-      - name: Test package
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Validate bare SemVer release tag
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: |
+          [[ "$GITHUB_REF_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]
+      - name: Install hash-verified tools
+        run: bash Tools/install_ci_tools.sh "$RUNNER_TEMP/commandkit-tools"
+      - name: Log actual toolchain and provenance
+        run: |
+          git rev-parse HEAD
+          sw_vers
+          swift --version
+          xcodebuild -version
+          xcodegen --version
+          swiftlint version
+      - name: Test public package
         run: swift test
       - name: Lint
         run: swiftlint lint --strict
-      - name: Build demo
+      - name: Build demo at macOS 14 minimum
         run: |
-          xcodebuild \
-            -project "$DEMO_PROJECT" \
-            -scheme "$DEMO_SCHEME" \
-            -destination "$DEMO_DESTINATION" \
-            CODE_SIGNING_ALLOWED=NO \
-            build
-      - name: Install pinned XcodeGen
+          xcodebuild -project "$DEMO_PROJECT" -scheme "$DEMO_SCHEME" \
+            -destination "$DEMO_DESTINATION" -derivedDataPath "$RUNNER_TEMP/CommandKitDerivedData" \
+            COMMANDKIT_BUNDLE_ID="dev.liquidglasstemplates.commandkit.ci.$GITHUB_RUN_ID" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Test demo models using owned fixtures
+        run: |
+          xcodebuild -project "$DEMO_PROJECT" -scheme "$DEMO_SCHEME" \
+            -destination "$DEMO_DESTINATION" -derivedDataPath "$RUNNER_TEMP/CommandKitDerivedData" \
+            -resultBundlePath "$RUNNER_TEMP/DemoModels.xcresult" \
+            -only-testing:CommandKitDemoTests \
+            COMMANDKIT_BUNDLE_ID="dev.liquidglasstemplates.commandkit.ci.$GITHUB_RUN_ID" \
+            CODE_SIGNING_ALLOWED=NO test
+      - name: External consumer build and hosted native regressions
+        run: |
+          python3 Tools/prepare_consumer.py --local "$PWD" --output "$RUNNER_TEMP/independent-consumer"
+          mkdir -p "$RUNNER_TEMP/consumer-captures"
+          cd "$RUNNER_TEMP/independent-consumer"
+          swift package resolve
+          swift build
+          CONSUMER_CAPTURE_DIR="$RUNNER_TEMP/consumer-captures" swift test
+      - name: Safe run-script negative fixtures
+        run: |
+          bash -n script/build_and_run.sh
+          zsh -n Scripts/record_showcase.sh
+          bash -n Scripts/capture_rc.sh
+          python3 Tools/test_run_script.py
+      - name: Reproduce checked-in project twice
         if: matrix.name == 'current'
         run: |
-          curl --fail --location --silent --show-error \
-            "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip" \
-            --output "$RUNNER_TEMP/xcodegen.zip"
-          unzip -q "$RUNNER_TEMP/xcodegen.zip" -d "$RUNNER_TEMP/xcodegen"
-          echo "$RUNNER_TEMP/xcodegen/xcodegen/bin" >> "$GITHUB_PATH"
-      - name: Reproduce checked-in project
-        if: matrix.name == 'current'
-        run: |
-          test "$(xcodegen --version | awk '{print $2}')" = "$XCODEGEN_VERSION"
-          demo_dir="$(dirname "$DEMO_PROJECT")"
-          (
-            cd "$demo_dir"
-            xcodegen generate
-          )
-          git diff --exit-code -- "$DEMO_PROJECT/project.pbxproj"
-      - name: Check documentation links
+          cd Examples/CommandKitDemo
+          xcodegen generate
+          xcodegen generate
+          cd ../..
+          git diff --exit-code -- Examples/CommandKitDemo/CommandKitDemo.xcodeproj/project.pbxproj
+      - name: Check local documentation links and repository hygiene
         if: matrix.name == 'current'
         run: |
           ruby -e 'Dir["**/*.md"].each { |file| File.read(file).scan(/\[[^\]]*\]\(([^)]+)\)/).flatten.each { |link| next if link.start_with?("http", "#", "mailto:"); path = link.split("#", 2).first.delete_prefix("<").delete_suffix(">"); next if path.empty?; abort("Missing #{path} from #{file}") unless File.exist?(File.expand_path(path, File.dirname(file))) } }'
-      - name: Check repository hygiene
-        if: matrix.name == 'current'
+          if git ls-files | grep -E '(^|/)(\.DS_Store|Thumbs\.db|xcuserdata|DerivedData|\.build)(/|$)|\.(xcuserstate|xccheckout)$'; then exit 1; fi
+          git diff --check
+      - name: Optional native XCUI journeys
+        if: github.event_name == 'workflow_dispatch' && inputs.native_ui && matrix.name == 'current'
         run: |
-          if git ls-files | grep -E '(^|/)(\.DS_Store|Thumbs\.db|xcuserdata|DerivedData|\.build)(/|$)|\.(xcuserstate|xccheckout)$'; then
-            exit 1
-          fi
+          xcodebuild -project "$DEMO_PROJECT" -scheme "$DEMO_SCHEME" \
+            -destination "$DEMO_DESTINATION" -derivedDataPath "$RUNNER_TEMP/CommandKitDerivedData" \
+            -resultBundlePath "$RUNNER_TEMP/NativeUI.xcresult" \
+            -only-testing:CommandKitDemoUITests \
+            COMMANDKIT_BUNDLE_ID="dev.liquidglasstemplates.commandkit.ci.$GITHUB_RUN_ID" \
+            CODE_SIGNING_ALLOWED=NO test
+      - name: Preserve native test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-evidence-${{ matrix.name }}
+          path: |
+            ${{ runner.temp }}/DemoModels.xcresult
+            ${{ runner.temp }}/NativeUI.xcresult
+            ${{ runner.temp }}/consumer-captures
+          if-no-files-found: ignore

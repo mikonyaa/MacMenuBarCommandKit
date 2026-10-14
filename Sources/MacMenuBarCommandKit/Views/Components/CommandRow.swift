@@ -51,5 +51,6 @@ public struct CommandRow: View {
         .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .onHover { isHovering = $0 }
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isHighlighted ? [.isSelected] : [])
     }
 }

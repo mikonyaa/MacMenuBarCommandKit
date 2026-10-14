@@ -29,6 +29,10 @@ public final class CommandRegistry: ObservableObject {
     }
 
     public func filteredCommands(matching query: String) -> [CommandItem] {
+        filteredCommands(in: commands, matching: query)
+    }
+
+    func filteredCommands(in commands: [CommandItem], matching query: String) -> [CommandItem] {
         let normalizedQuery = query
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)

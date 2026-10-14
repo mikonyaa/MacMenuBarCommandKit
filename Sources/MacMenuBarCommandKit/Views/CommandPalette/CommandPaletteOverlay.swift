@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct CommandPaletteOverlay<Background: View>: View {
     @ObservedObject private var commandStore: CommandStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let background: Background
     private let onCommand: (CommandItem) -> Void
 
@@ -18,16 +19,19 @@ public struct CommandPaletteOverlay<Background: View>: View {
     public var body: some View {
         ZStack {
             background
+                .disabled(commandStore.isPalettePresented)
+                .allowsHitTesting(!commandStore.isPalettePresented)
+                .accessibilityHidden(commandStore.isPalettePresented)
 
             if commandStore.isPalettePresented {
                 dimmingLayer
                 CommandPalette(commandStore: commandStore, onCommand: onCommand)
                     .shadow(color: .black.opacity(0.28), radius: 28, x: 0, y: 18)
-                    .transition(.scale(scale: 0.985).combined(with: .opacity))
+                    .transition(reduceMotion ? .opacity : .scale(scale: 0.985).combined(with: .opacity))
                     .zIndex(2)
             }
         }
-        .animation(.snappy(duration: 0.16), value: commandStore.isPalettePresented)
+        .animation(reduceMotion ? nil : .snappy(duration: 0.16), value: commandStore.isPalettePresented)
         .onExitCommand {
             if commandStore.isPalettePresented {
                 commandStore.dismissPalette()

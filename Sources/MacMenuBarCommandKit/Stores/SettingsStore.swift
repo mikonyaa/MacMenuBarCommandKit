@@ -10,10 +10,12 @@ public final class SettingsStore: ObservableObject {
 
     @Published public private(set) var settings: AppSettings
     private let defaults: UserDefaults
+    private let keyPrefix: String
 
-    public init(defaults: UserDefaults = .standard) {
+    public init(defaults: UserDefaults = .standard, keyPrefix: String = "MacMenuBarCommandKit.") {
         self.defaults = defaults
-        settings = Self.load(from: defaults)
+        self.keyPrefix = keyPrefix
+        settings = Self.load(from: defaults, keyPrefix: keyPrefix)
     }
 
     public func update(_ mutate: (inout AppSettings) -> Void) {
@@ -29,19 +31,19 @@ public final class SettingsStore: ObservableObject {
     }
 
     private func persist(_ settings: AppSettings) {
-        defaults.set(settings.menuBarPresentation.rawValue, forKey: Key.menuBarPresentation)
-        defaults.set(settings.themePreference.rawValue, forKey: Key.themePreference)
-        defaults.set(settings.demoDataEnabled, forKey: Key.demoDataEnabled)
+        defaults.set(settings.menuBarPresentation.rawValue, forKey: keyPrefix + "menuBarPresentation")
+        defaults.set(settings.themePreference.rawValue, forKey: keyPrefix + "themePreference")
+        defaults.set(settings.demoDataEnabled, forKey: keyPrefix + "demoDataEnabled")
     }
 
-    private static func load(from defaults: UserDefaults) -> AppSettings {
-        let menuValue = defaults.string(forKey: Key.menuBarPresentation)
-        let themeValue = defaults.string(forKey: Key.themePreference)
+    private static func load(from defaults: UserDefaults, keyPrefix: String) -> AppSettings {
+        let menuValue = defaults.string(forKey: keyPrefix + "menuBarPresentation")
+        let themeValue = defaults.string(forKey: keyPrefix + "themePreference")
 
         return AppSettings(
             menuBarPresentation: menuValue.flatMap(MenuBarPresentation.init(rawValue:)) ?? .balanced,
             themePreference: themeValue.flatMap(AppThemePreference.init(rawValue:)) ?? .system,
-            demoDataEnabled: defaults.object(forKey: Key.demoDataEnabled) as? Bool ?? true
+            demoDataEnabled: defaults.object(forKey: keyPrefix + "demoDataEnabled") as? Bool ?? true
         )
     }
 }

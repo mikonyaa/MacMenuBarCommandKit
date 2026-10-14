@@ -63,11 +63,12 @@ public struct MainDashboardView: View {
             }
         }
         .help(section.subtitle)
+        .accessibilityIdentifier("commandkit.dashboard.section.\(section.rawValue)")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     private var detailContent: some View {
-        GrabScrollView {
+        ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 switch currentSection {
                 case .today:
@@ -84,8 +85,8 @@ public struct MainDashboardView: View {
                     quickActions(limit: nil)
                 case .recent:
                     pageHeader(
-                        title: "Recent Commands",
-                        subtitle: "A live audit trail that proves every action changed local state."
+                        title: "Command Attempts",
+                        subtitle: "Recent requests and their reported outcomes. Samples are labelled separately."
                     )
                     recentCommands
                     recentActivity(limit: nil)
@@ -125,7 +126,7 @@ public struct MainDashboardView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Command Center")
                         .font(.largeTitle.bold())
-                    Text("A production-ready menu bar shell for quick commands, local state, settings, and keyboard-first macOS workflows.")
+                    Text("A reusable menu bar shell for app-owned commands, settings, and keyboard-first macOS workflows.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -133,7 +134,9 @@ public struct MainDashboardView: View {
                         StatusBadge(commandStore.isFocusModeEnabled ? "Focus active" : "Ready", color: commandStore.isFocusModeEnabled ? .indigo : .green)
                         StatusBadge("Local data", systemImage: "externaldrive", color: .blue)
                         if commandStore.hasActionSummary {
-                            StatusBadge(commandStore.lastActionSummary, systemImage: "checkmark.circle", color: .gray)
+                            StatusBadge(commandStore.lastActionSummary, systemImage: outcomeIcon, color: outcomeColor)
+                                .accessibilityLabel(outcomeLabel)
+                                .accessibilityIdentifier("commandkit.latest-result")
                         }
                     }
                 }
@@ -147,6 +150,21 @@ public struct MainDashboardView: View {
                 .controlSize(.large)
             }
         }
+    }
+
+    private var outcomeIcon: String {
+        guard let result = commandStore.latestResult else { return "info.circle" }
+        return result.succeeded ? "checkmark.circle" : "exclamationmark.triangle"
+    }
+
+    private var outcomeColor: Color {
+        guard let result = commandStore.latestResult else { return .secondary }
+        return result.succeeded ? .green : .orange
+    }
+
+    private var outcomeLabel: String {
+        guard let result = commandStore.latestResult else { return commandStore.lastActionSummary }
+        return "\(result.succeeded ? "Succeeded" : "Failed"): \(result.summary)"
     }
 
     private func pageHeader(title: String, subtitle: String) -> some View {
@@ -177,6 +195,7 @@ public struct MainDashboardView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
             TextField("Filter commands", text: $commandStore.query)
+                .accessibilityIdentifier("commandkit.dashboard.search")
                 .textFieldStyle(.plain)
             if !commandStore.query.isEmpty {
                 Button {
@@ -233,7 +252,7 @@ public struct MainDashboardView: View {
             EmptyStateView(title: "Dashboard error", message: message, systemImage: "exclamationmark.triangle")
         case .loaded:
             VStack(alignment: .leading, spacing: 12) {
-                SectionHeader("Recent Commands", subtitle: "A compact activity feed for menu bar utilities.")
+                SectionHeader("Attempts / Samples", subtitle: "Reported outcomes and clearly labelled demonstration content.")
                 AppCard {
                     VStack(spacing: 10) {
                         ForEach(Array(dashboardStore.activities.prefix(limit ?? Int.max))) { activity in
@@ -247,7 +266,7 @@ public struct MainDashboardView: View {
 
     private var recentCommands: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader("Command History", subtitle: "The newest command stays on top.")
+            SectionHeader("Recent Attempts", subtitle: "Includes failed requests; the newest request stays on top.")
             if commandStore.recentCommands.isEmpty {
                 EmptyStateView(
                     title: "No commands run yet",
@@ -291,7 +310,7 @@ public struct MainDashboardView: View {
             )
             statusCard(
                 title: "Command Routing",
-                value: "\(commandStore.registry.commands.count) ready",
+                value: "\(commandStore.registry.commands.count) commands",
                 caption: "Metadata and handlers are separated",
                 systemImage: "switch.2",
                 color: .orange
@@ -347,53 +366,5 @@ public struct MainDashboardView: View {
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-private enum DashboardSection: String, CaseIterable, Identifiable, Hashable {
-    case today
-    case actions
-    case recent
-    case status
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .today:
-            "Today"
-        case .actions:
-            "Quick Actions"
-        case .recent:
-            "Recent Commands"
-        case .status:
-            "System Status"
-        }
-    }
-
-    var subtitle: String {
-        switch self {
-        case .today:
-            "Overview, metrics, and recent activity"
-        case .actions:
-            "Search and run available commands"
-        case .recent:
-            "Review command history and activity"
-        case .status:
-            "Inspect local template status"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .today:
-            "sun.max"
-        case .actions:
-            "bolt"
-        case .recent:
-            "clock.arrow.circlepath"
-        case .status:
-            "chart.xyaxis.line"
-        }
     }
 }

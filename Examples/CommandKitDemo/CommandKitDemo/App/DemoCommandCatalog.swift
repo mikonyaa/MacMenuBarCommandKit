@@ -5,6 +5,7 @@ import SwiftUI
 extension CommandID {
     static let newNote: CommandID = "note.new"
     static let startTimer: CommandID = "focus.start-timer"
+    static let cancelTimer: CommandID = "focus.cancel-timer"
     static let captureClipboard: CommandID = "clipboard.capture"
     static let copyStatusReport: CommandID = "status.copy-report"
     static let clearInbox: CommandID = "inbox.clear"
@@ -18,7 +19,7 @@ extension CommandItem {
         CommandItem(
             id: .newNote,
             title: "New Note",
-            subtitle: "Capture a short local note.",
+            subtitle: "Open an editor; Save adds a session note.",
             systemImage: "square.and.pencil",
             category: .productivity,
             shortcut: CommandShortcut(key: "N")
@@ -32,9 +33,17 @@ extension CommandItem {
             shortcut: CommandShortcut(modifiers: [.command, .shift], key: "T")
         ),
         CommandItem(
+            id: .cancelTimer,
+            title: "Cancel Timer",
+            subtitle: "Cancel the running timer without adding completed time.",
+            systemImage: "stop.circle",
+            category: .focus,
+            shortcut: CommandShortcut(modifiers: [.command, .option], key: "T")
+        ),
+        CommandItem(
             id: .captureClipboard,
             title: "Capture Clipboard",
-            subtitle: "Save copied text to the local inbox.",
+            subtitle: "Read copied text into the session inbox.",
             systemImage: "doc.on.clipboard",
             category: .clipboard,
             shortcut: CommandShortcut(modifiers: [.command, .shift], key: "V")
@@ -50,7 +59,7 @@ extension CommandItem {
         CommandItem(
             id: .clearInbox,
             title: "Clear Inbox",
-            subtitle: "Archive waiting local items in one action.",
+            subtitle: "Delete all session entries; Undo Clear is available.",
             systemImage: "tray.and.arrow.down",
             category: .productivity,
             shortcut: CommandShortcut(modifiers: [.command, .shift], key: "X")
@@ -65,8 +74,8 @@ extension CommandItem {
         ),
         CommandItem(
             id: .toggleFocusMode,
-            title: "Toggle Focus Mode",
-            subtitle: "Quiet the dashboard and highlight active work.",
+            title: "Toggle Dashboard Focus",
+            subtitle: "Toggle the dashboard badge. System Focus is unchanged.",
             systemImage: "moon.circle",
             category: .focus,
             shortcut: CommandShortcut(modifiers: [.command, .option], key: "F")
@@ -80,150 +89,6 @@ extension CommandItem {
             shortcut: CommandShortcut(key: ",")
         )
     ]
-}
-
-extension ActivityItem {
-    static let demo: [ActivityItem] = [
-        ActivityItem(
-            id: "clip-captured",
-            title: "Clipboard captured",
-            subtitle: "Copied text saved to the local inbox.",
-            systemImage: "doc.on.clipboard",
-            timestamp: "2 min ago",
-            tone: .accent
-        ),
-        ActivityItem(
-            id: "focus-started",
-            title: "Focus timer started",
-            subtitle: "Deep work block ends at 15:25.",
-            systemImage: "timer",
-            timestamp: "8 min ago",
-            tone: .success
-        ),
-        ActivityItem(
-            id: "draft-note",
-            title: "New note captured",
-            subtitle: "Saved to the local command inbox.",
-            systemImage: "note.text",
-            timestamp: "21 min ago",
-            tone: .neutral
-        )
-    ]
-}
-
-@MainActor
-final class DemoCommandRuntime: ObservableObject {
-    @Published private(set) var clipboardEntries: [String] = []
-    @Published private(set) var notes: [String] = []
-    private(set) var commandRunCount = 42
-    private(set) var focusMinutes = 150
-    private(set) var inboxItems = 7
-    private(set) var focusActive = false
-
-    var metrics: [MetricCard] {
-        [
-            MetricCard(
-                id: "commands",
-                title: "Commands",
-                value: "\(commandRunCount)",
-                caption: "run today",
-                systemImage: "command",
-                trend: .up
-            ),
-            MetricCard(
-                id: "focus",
-                title: "Focus",
-                value: focusActive ? "Active" : String(format: "%.1fh", Double(focusMinutes) / 60),
-                caption: focusActive ? "timer running" : "protected",
-                systemImage: "moon.circle",
-                trend: focusActive ? .up : .flat
-            ),
-            MetricCard(
-                id: "queue",
-                title: "Inbox",
-                value: "\(inboxItems)",
-                caption: "items waiting",
-                systemImage: "tray.full",
-                trend: inboxItems == 0 ? .flat : .down
-            )
-        ]
-    }
-
-    func recordSuccessfulRun() {
-        commandRunCount += 1
-    }
-
-    func createNote() -> String {
-        let note = "Untitled note \(notes.count + 1)"
-        notes.insert(note, at: 0)
-        inboxItems += 1
-        return "Saved \(note.lowercased()) to the local inbox."
-    }
-
-    func startTimer() -> String {
-        focusMinutes += 25
-        focusActive = true
-        return "Started a 25-minute focus timer."
-    }
-
-    func captureClipboard() throws -> String {
-        let text = NSPasteboard.general.string(forType: .string) ?? ""
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw DemoCommandError.emptyClipboard
-        }
-
-        clipboardEntries.insert(trimmed, at: 0)
-        inboxItems += 1
-        return "Saved \(trimmed.count) clipboard characters to the local inbox."
-    }
-
-    func clearInbox() -> String {
-        clipboardEntries.removeAll()
-        notes.removeAll()
-        inboxItems = 0
-        return "Cleared notes and captured clipboard content."
-    }
-
-    func toggleFocus() -> String {
-        focusActive.toggle()
-        return focusActive ? "Focus mode enabled." : "Focus mode disabled."
-    }
-
-    func copyStatusReport(recentCommandCount: Int) -> String {
-        let report = """
-        CommandKit Status
-        Commands: \(commandRunCount)
-        Recent: \(recentCommandCount)
-        Focus: \(focusActive ? "active" : "ready")
-        Clipboard items: \(clipboardEntries.count)
-        """
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(report, forType: .string)
-        return "Copied status report to the clipboard."
-    }
-
-    func tone(for id: CommandID, result: CommandExecutionResult) -> ActivityTone {
-        guard result.succeeded else { return .warning }
-        switch id {
-        case .startTimer, .toggleFocusMode:
-            return .success
-        case .clearInbox:
-            return .warning
-        case .openDashboard, .openSettings:
-            return .neutral
-        default:
-            return .accent
-        }
-    }
-}
-
-enum DemoCommandError: LocalizedError {
-    case emptyClipboard
-
-    var errorDescription: String? {
-        "The clipboard is empty. Copy text and run the command again."
-    }
 }
 
 private extension CommandModifier {

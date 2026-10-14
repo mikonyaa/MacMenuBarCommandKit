@@ -22,6 +22,7 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     SDKROOT: macosx
     SWIFT_VERSION: "6.0"
+    COMMANDKIT_BUNDLE_ID: dev.liquidglasstemplates.commandkit.demo
 
 targets:
   CommandKitDemo:
@@ -47,9 +48,41 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: CommandKitDemo/Info.plist
-        MARKETING_VERSION: "0.2.0"
-        PRODUCT_BUNDLE_IDENTIFIER: dev.liquidglasstemplates.commandkit.demo
+        MARKETING_VERSION: "0.3.0"
+        PRODUCT_BUNDLE_IDENTIFIER: "$(COMMANDKIT_BUNDLE_ID)"
         PRODUCT_NAME: "$(TARGET_NAME)"
-    scheme:
-      configVariants: []
-      gatherCoverageData: false
+  CommandKitDemoTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: CommandKitDemoTests
+    dependencies:
+      - target: CommandKitDemo
+      - package: MacMenuBarCommandKit
+        product: MacMenuBarCommandKit
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: "$(COMMANDKIT_BUNDLE_ID).modeltests"
+  CommandKitDemoUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: CommandKitDemoUITests
+    dependencies:
+      - target: CommandKitDemo
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: "$(COMMANDKIT_BUNDLE_ID).uitests"
+
+schemes:
+  CommandKitDemo:
+    build:
+      targets:
+        CommandKitDemo: all
+    test:
+      gatherCoverageData: true
+      targets:
+        - CommandKitDemoTests
+        - CommandKitDemoUITests

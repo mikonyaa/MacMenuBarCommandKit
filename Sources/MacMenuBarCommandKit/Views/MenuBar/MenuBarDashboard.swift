@@ -8,6 +8,7 @@ public struct MenuBarDashboard: View {
     private let openMainWindow: () -> Void
     private let openSettings: () -> Void
     private let quit: () -> Void
+    @State private var showsAllCommands = false
 
     public init(
         commandStore: CommandStore,
@@ -31,8 +32,11 @@ public struct MenuBarDashboard: View {
         VStack(spacing: 14) {
             header
             searchField
-            GrabScrollView(showsIndicators: true) {
-                content
+            ScrollView(showsIndicators: true) {
+                VStack(spacing: 12) {
+                    quickCommands
+                    content
+                }
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(height: settingsStore.settings.menuBarPresentation == .compact ? 340 : 430)
@@ -43,6 +47,7 @@ public struct MenuBarDashboard: View {
             width: settingsStore.settings.menuBarPresentation == .compact ? 340 : 390,
             height: settingsStore.settings.menuBarPresentation == .compact ? 520 : 620
         )
+        .onChange(of: commandStore.query) { _, _ in showsAllCommands = false }
     }
 
     private var header: some View {
@@ -55,13 +60,19 @@ public struct MenuBarDashboard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("CommandKit")
                     .font(.headline)
-                Text(commandStore.hasActionSummary ? commandStore.lastActionSummary : "Local command router")
+                Text(commandStore.hasActionSummary ? outcomeLabel : "Local command router")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .help(commandStore.lastActionSummary)
+                    .accessibilityLabel(outcomeLabel)
             }
             Spacer()
-            StatusBadge(commandStore.isFocusModeEnabled ? "Focus" : "Ready", color: commandStore.isFocusModeEnabled ? .indigo : .green)
+            if commandStore.latestResult?.succeeded == false {
+                StatusBadge("Failed", systemImage: "exclamationmark.triangle", color: .orange)
+            } else {
+                StatusBadge(commandStore.isFocusModeEnabled ? "Focus" : "Ready", color: commandStore.isFocusModeEnabled ? .indigo : .green)
+            }
         }
     }
 
@@ -110,25 +121,13 @@ public struct MenuBarDashboard: View {
 
     private var loadedContent: some View {
         VStack(spacing: 12) {
-            SectionHeader("Quick Commands", subtitle: "Local actions you can replace")
-            VStack(spacing: 2) {
-                ForEach(Array(commandStore.filteredCommands.prefix(4))) { command in
-                    Button {
-                        onCommand(command)
-                    } label: {
-                        CommandRow(command: command)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
             if let firstMetric = dashboardStore.metrics.first {
                 MetricCardView(metric: firstMetric)
             }
 
             if !dashboardStore.activities.isEmpty {
                 SectionHeader(
-                    "Activity",
+                    "Attempts / Samples",
                     subtitle: commandStore.hasActionSummary ? commandStore.lastActionSummary : "Latest local events"
                 )
                 VStack(spacing: 2) {
@@ -161,6 +160,36 @@ public struct MenuBarDashboard: View {
                 }
             }
         }
+    }
+
+    private var quickCommands: some View {
+        let commands = commandStore.filteredCommands
+        return VStack(alignment: .leading, spacing: 8) {
+            SectionHeader("Quick Commands", subtitle: "Available independently of dashboard data")
+            if commands.isEmpty {
+                Text(commandStore.query.isEmpty ? "No commands are available." : "No commands match this search.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("commandkit.menu.no-results")
+            } else {
+                ForEach(Array(commands.prefix(showsAllCommands ? commands.count : 4))) { command in
+                    Button { onCommand(command) } label: { CommandRow(command: command) }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("commandkit.menu.row.\(command.id.rawValue)")
+                }
+                if commands.count > 4 {
+                    Button(showsAllCommands ? "Show fewer commands" : "Show all \(commands.count) commands") {
+                        showsAllCommands.toggle()
+                    }
+                    .accessibilityIdentifier("commandkit.menu.more")
+                }
+            }
+        }
+    }
+
+    private var outcomeLabel: String {
+        guard let result = commandStore.latestResult else { return commandStore.lastActionSummary }
+        return "\(result.succeeded ? "Succeeded" : "Failed"): \(result.summary)"
     }
 
     private var footer: some View {

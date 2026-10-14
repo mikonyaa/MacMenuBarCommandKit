@@ -1,3 +1,4 @@
+"""Assemble a slideshow GIF from captured PNGs; no app recording or UI fabrication."""
 from __future__ import annotations
 
 from pathlib import Path

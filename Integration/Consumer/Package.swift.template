@@ -1,0 +1,18 @@
+// swift-tools-version: 6.0
+import PackageDescription
+
+let package = Package(
+    name: "IndependentCommandConsumer",
+    platforms: [.macOS(.v14)],
+    dependencies: [__DEPENDENCY__],
+    targets: [
+        .executableTarget(
+            name: "ConsumerHost",
+            dependencies: [.product(name: "MacMenuBarCommandKit", package: "MacMenuBarCommandKit")]
+        ),
+        .testTarget(
+            name: "ConsumerTests",
+            dependencies: [.product(name: "MacMenuBarCommandKit", package: "MacMenuBarCommandKit")]
+        )
+    ]
+)
