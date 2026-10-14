@@ -7,14 +7,14 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCREENSHOTS = ROOT / "Assets" / "Screenshots"
+SCREENSHOTS = ROOT / "Assets" / "NativeCaptures" / "0.3.0-rc.1"
 GIFS = ROOT / "Assets" / "GIFs"
 
 FRAME_NAMES = [
-    "main-window.png",
-    "menu-dashboard.png",
-    "command-palette.png",
-    "settings.png",
+    "main-window.partial.png",
+    "menu-dashboard.partial.png",
+    "command-palette.partial.png",
+    "settings.partial.png",
 ]
 
 CANVAS_SIZE = (1600, 1000)
@@ -39,7 +39,7 @@ def main() -> None:
     GIFS.mkdir(parents=True, exist_ok=True)
     frames = [load_frame(SCREENSHOTS / name) for name in FRAME_NAMES]
     frames[0].save(
-        GIFS / "mac-menu-bar-command-kit.gif",
+        GIFS / "rc-native-content-captures.gif",
         save_all=True,
         append_images=frames[1:],
         duration=[1500, 1500, 1500, 1500],

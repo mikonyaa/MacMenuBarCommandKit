@@ -1,0 +1,186 @@
+{
+  "recordedAtUTC": "2026-10-14T02:48:55.705946+00:00",
+  "baselineSHA": "ab43ae5d750f1005ee3e704b3756f4af8c2b3a37",
+  "implementationSHA": "a452c74db60bbdb1b42e906ecc3b8d2de5c41367",
+  "captureSourceSHA": "d8f49f6b6840b41ac641efbf74be41eebc9c36e3",
+  "environment": {
+    "macOS": "26.7.1 (25G241)",
+    "hardware": "Apple M4 arm64",
+    "swift": "6.4 swiftlang-6.4.0.34.1",
+    "xcode": "27.0 (27A266a)",
+    "xcodegen": "2.45.4",
+    "swiftlint": "0.65.0",
+    "pillow": "12.0.0"
+  },
+  "checks": {
+    "baselinePackage": {
+      "exit": 0,
+      "passed": 7
+    },
+    "rcPackage": {
+      "exit": 0,
+      "passed": 12
+    },
+    "strictLint": {
+      "exit": 0
+    },
+    "demoBuild": {
+      "exit": 0
+    },
+    "demoModels": {
+      "exit": 0,
+      "passed": 9
+    },
+    "fullNativeScheme": {
+      "exit": 65,
+      "status": "blocked",
+      "reason": "UI runner authentication cancelled: System authentication is running",
+      "modelPassed": 9,
+      "uiExecuted": 0
+    },
+    "baselineConsumerInstall": {
+      "resolveExit": 0,
+      "buildExit": 0,
+      "version": "0.2.0",
+      "revision": "ab43ae5d750f1005ee3e704b3756f4af8c2b3a37"
+    },
+    "baselineConsumerRegression": {
+      "exit": 1,
+      "cases": 3,
+      "assertionFailures": 7,
+      "expectedRegression": true
+    },
+    "rcConsumer": {
+      "resolveExit": 0,
+      "buildExit": 0,
+      "testExit": 0,
+      "cases": 7,
+      "passed": 6,
+      "skipped": 1,
+      "skippedReason": "Hosted process cannot acquire key window; native focus remains pending"
+    },
+    "projectRegeneration": {
+      "version": "2.45.4",
+      "repetitions": 2,
+      "diffExit": 0
+    },
+    "syntaxHygiene": {
+      "exit": 0
+    },
+    "capture": {
+      "status": "partial",
+      "windowCaptureExit": 1,
+      "permissionPreflight": false
+    }
+  },
+  "runScript": {
+    "buildFailureExit": 42,
+    "extraArgumentExit": 2,
+    "foreignSurvived": true,
+    "health": {
+      "actionSucceeded": true,
+      "clipboardReadbackMatches": true,
+      "demoDataEnabled": false,
+      "hasWindow": true,
+      "inboxCount": 0,
+      "menuPresentation": "balanced",
+      "pid": 21850,
+      "sampleCount": 0,
+      "summary": "Copied session status report to the clipboard.",
+      "theme": "system"
+    },
+    "invalidExit": 2,
+    "ownedPIDStopped": true,
+    "verifyExit": 0
+  },
+  "nativeRelaunch": {
+    "first": {
+      "actionSucceeded": true,
+      "clipboardReadbackMatches": true,
+      "demoDataEnabled": false,
+      "hasWindow": true,
+      "inboxCount": 0,
+      "menuPresentation": "compact",
+      "pid": 16121,
+      "sampleCount": 0,
+      "summary": "Copied session status report to the clipboard.",
+      "theme": "dark"
+    },
+    "relaunched": {
+      "actionSucceeded": true,
+      "clipboardReadbackMatches": true,
+      "demoDataEnabled": false,
+      "hasWindow": true,
+      "inboxCount": 0,
+      "menuPresentation": "compact",
+      "pid": 16136,
+      "sampleCount": 0,
+      "summary": "Copied session status report to the clipboard.",
+      "theme": "dark"
+    },
+    "status": "pass"
+  },
+  "logDigests": [
+    {
+      "name": "baseline-swift-test.log",
+      "sha256": "71ad9a32d4b631cc50e47dd38e77c86438c20e5a22e1f809c3b0d498ec4a4057"
+    },
+    {
+      "name": "package-final.log",
+      "sha256": "3f95ca9cabe06e92aa0758c7ff98d21ff8e8d9be7ae45c558d0365f41891c911"
+    },
+    {
+      "name": "lint-final.log",
+      "sha256": "c549614a002e59318d45356de52ed7ddbe190b849a4ecdd3f8a363b8108e8421"
+    },
+    {
+      "name": "demo-model-tests.log",
+      "sha256": "e9861157e3a46a26072988d2ac56481b393b3f78981dea2a9697e14b36683361"
+    },
+    {
+      "name": "full-native-recheck.log",
+      "sha256": "c81dcbed88d8a13b5ffcf4fd2bb65d07a6360e9b6d16ffd76229bd4203e5f4ae"
+    },
+    {
+      "name": "recheck-baseline-resolve.log",
+      "sha256": "2bd0e6ed9c4fc4892bc4679f96c92efaa069b08c992eccd0bb4518f3245cfcbd"
+    },
+    {
+      "name": "recheck-baseline-build.log",
+      "sha256": "43275a322413c63fb31c0bfeb58208f073040a445095366b9acfe28f27ca988b"
+    },
+    {
+      "name": "recheck-baseline-regression.log",
+      "sha256": "8cf2b35cf4fa4b0c69a322cfef74e0bc5e161711c075229d530ee8b385e7e726"
+    },
+    {
+      "name": "recheck-rc-resolve.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "recheck-rc-build.log",
+      "sha256": "bf19f55320577c7e7f2554df50ecc130f2700c308fcbbdee345db4ecaae86cf2"
+    },
+    {
+      "name": "recheck-rc-tests.log",
+      "sha256": "9c6c3a1949359d7ccabfce31d2c2a6261d818047f3b1826e1805fe3613376cfa"
+    },
+    {
+      "name": "pinned-tools.log",
+      "sha256": "b4cbd5818256f26ce69d674e9a98de48338cf46e82cdb78d42b1287497f1e848"
+    },
+    {
+      "name": "capture.log",
+      "sha256": "85b61358dbdaa35e35ae19f2a8c89ee249c49fe8e1cec58a537147a731c5e1fd"
+    }
+  ],
+  "pending": [
+    "authenticated XCUI and physical/modal/focus/system-menu journeys",
+    "audible VoiceOver and interactive accessibility preferences",
+    "owned signed Launch at Login",
+    "actual agreed sleep/wake and visible timer journey",
+    "complete WindowServer captures",
+    "minimum macOS 14 runtime/exact minimum compiler where claimed"
+  ],
+  "publication": "CI and anonymous public source/consumer evidence is attached to the exact GitHub prerelease; not inferred from a badge."
+}

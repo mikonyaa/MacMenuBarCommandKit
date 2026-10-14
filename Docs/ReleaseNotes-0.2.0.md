@@ -6,7 +6,7 @@
 
 - App-owned, string-backed `CommandID` values replace the closed sample action enum.
 - Handlers can throw and return explicit success or failure summaries.
-- Demo IDs, fixtures, clipboard persistence, and side effects no longer leak into package defaults.
+- Demo IDs, fixtures, clipboard session state, and side effects no longer leak into package defaults.
 - The palette supports Up/Down navigation, Return, Escape, and focus restoration.
 - Menu and Settings shortcuts are rendered from command metadata.
 - Launch at Login reflects current `SMAppService` status instead of a duplicated preference.
